@@ -16,19 +16,13 @@
 
 Windows binaries are not avaliable yet at this moment.
 
-Here are the [python 3.8](https://www.python.org/downloads/release/python-389/) dependencies:
+Install the [Python 3.8](https://www.python.org/downloads/release/python-389/) dependencies:
 
 ```
-PyQt5
-pywin32
-keyboard
-grequests
-beautifulsoup4
-pytesseract
-pyperclip
+python -m pip install requirements.txt
 ```
 
-You also need to download [tesseract-ocr](https://cdn.discordapp.com/attachments/714922631693860956/925180968808087572/tesseract-ocr.7z) and extract it to the root directory to use OCR.
+You also need to download [tesseract-ocr](https://cdn.discordapp.com/attachments/714922631693860956/925180968808087572/tesseract-ocr.7z) and extract it to the root directory to use the OCR tool.
 
 <hr width=30>
 

@@ -314,13 +314,18 @@ class UI(QMainWindow):
     # calling scraper and adding to ui
     
     def run_searcher(self):
+        query = self.search_bar.text().strip()
+
+        if not query:
+            self.status_label.setText('Please enter a search query')
+            return
+
         self.status_label.setText('Searching...')
         self.search_frame.setEnabled(False)
         QtWidgets.QApplication.processEvents()
 
         sites = []
 
-        query = self.search_bar.text().strip()
         if self.quizizz_button.isChecked(): sites.append('quizizz')
         if self.quizlet_button.isChecked(): sites.append('quizlet')
         if self.brainly_button.isChecked(): sites.append('brainly')
@@ -365,11 +370,12 @@ class UI(QMainWindow):
     # data entry tools
     
     def run_ocr_tool(self, force_run_searcher=False):
+        if not os.path.exists(resource_path('tesseract-ocr')):
+            self.status_label.setText('Tesseract not found.')
+            return
+
         self.status_label.setText('OCR in progress...')
         QtWidgets.QApplication.processEvents()
-
-        # # delay
-        # time.sleep(0.2)
 
         self.setWindowOpacity(0)
         self.stackedWidget.setCurrentIndex(0)
