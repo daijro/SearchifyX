@@ -7,7 +7,8 @@
 
 #### SearchifyX in action
 
-![in action](https://media.discordapp.net/attachments/714922631693860956/925164698058502175/ta1Y74Ehy8.gif)
+![in action](https://user-images.githubusercontent.com/72637910/147515480-236fe392-6282-44bc-b888-54f15adeb523.gif)
+
 
 <hr width=30>
 
