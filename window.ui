@@ -1,0 +1,1131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>700</width>
+    <height>450</height>
+   </rect>
+  </property>
+  <property name="font">
+   <font>
+    <family>Poppins Medium</family>
+    <pointsize>10</pointsize>
+   </font>
+  </property>
+  <property name="windowTitle">
+   <string>SearchifyX</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QGridLayout" name="gridLayout">
+    <property name="leftMargin">
+     <number>0</number>
+    </property>
+    <property name="topMargin">
+     <number>0</number>
+    </property>
+    <property name="rightMargin">
+     <number>0</number>
+    </property>
+    <property name="bottomMargin">
+     <number>0</number>
+    </property>
+    <property name="horizontalSpacing">
+     <number>6</number>
+    </property>
+    <property name="verticalSpacing">
+     <number>4</number>
+    </property>
+    <item row="1" column="0">
+     <widget class="QStackedWidget" name="stackedWidget">
+      <property name="currentIndex">
+       <number>0</number>
+      </property>
+      <widget class="QWidget" name="stackedWidgetPage1">
+       <layout class="QGridLayout" name="gridLayout_4">
+        <property name="leftMargin">
+         <number>0</number>
+        </property>
+        <property name="topMargin">
+         <number>0</number>
+        </property>
+        <property name="rightMargin">
+         <number>0</number>
+        </property>
+        <property name="bottomMargin">
+         <number>0</number>
+        </property>
+        <property name="horizontalSpacing">
+         <number>6</number>
+        </property>
+        <property name="verticalSpacing">
+         <number>4</number>
+        </property>
+        <item row="0" column="0">
+         <widget class="QFrame" name="frame">
+          <layout class="QGridLayout" name="gridLayout_2">
+           <property name="leftMargin">
+            <number>6</number>
+           </property>
+           <property name="topMargin">
+            <number>0</number>
+           </property>
+           <property name="rightMargin">
+            <number>6</number>
+           </property>
+           <property name="bottomMargin">
+            <number>3</number>
+           </property>
+           <property name="spacing">
+            <number>3</number>
+           </property>
+           <item row="1" column="0" colspan="2">
+            <widget class="QTreeWidget" name="treeWidget">
+             <property name="frameShape">
+              <enum>QFrame::NoFrame</enum>
+             </property>
+             <property name="rootIsDecorated">
+              <bool>false</bool>
+             </property>
+             <column>
+              <property name="text">
+               <string>Confidence</string>
+              </property>
+             </column>
+             <column>
+              <property name="text">
+               <string>Identified Question</string>
+              </property>
+             </column>
+             <column>
+              <property name="text">
+               <string>Answer</string>
+              </property>
+             </column>
+            </widget>
+           </item>
+           <item row="3" column="0" colspan="2">
+            <layout class="QHBoxLayout" name="horizontalLayout_2">
+             <item>
+              <widget class="QLabel" name="status_label">
+               <property name="text">
+                <string/>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <spacer name="horizontalSpacer_2">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>40</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+             <item>
+              <widget class="QPushButton" name="settings_button">
+               <property name="minimumSize">
+                <size>
+                 <width>30</width>
+                 <height>30</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>30</width>
+                 <height>30</height>
+                </size>
+               </property>
+               <property name="font">
+                <font>
+                 <family>Segoe MDL2 Assets</family>
+                 <pointsize>14</pointsize>
+                </font>
+               </property>
+               <property name="toolTip">
+                <string>Settings</string>
+               </property>
+               <property name="text">
+                <string></string>
+               </property>
+               <property name="flat">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="quizlet_button">
+               <property name="minimumSize">
+                <size>
+                 <width>30</width>
+                 <height>30</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>Quizlet</string>
+               </property>
+               <property name="checkable">
+                <bool>true</bool>
+               </property>
+               <property name="checked">
+                <bool>false</bool>
+               </property>
+               <property name="flat">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="quizizz_button">
+               <property name="minimumSize">
+                <size>
+                 <width>30</width>
+                 <height>30</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>Quizizz</string>
+               </property>
+               <property name="checkable">
+                <bool>true</bool>
+               </property>
+               <property name="checked">
+                <bool>false</bool>
+               </property>
+               <property name="flat">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="brainly_button">
+               <property name="minimumSize">
+                <size>
+                 <width>30</width>
+                 <height>30</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>Brainly</string>
+               </property>
+               <property name="checkable">
+                <bool>true</bool>
+               </property>
+               <property name="checked">
+                <bool>false</bool>
+               </property>
+               <property name="flat">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item row="0" column="0" colspan="2">
+            <widget class="QFrame" name="search_frame">
+             <layout class="QHBoxLayout" name="search_bar_layout">
+              <property name="spacing">
+               <number>6</number>
+              </property>
+              <property name="leftMargin">
+               <number>0</number>
+              </property>
+              <property name="topMargin">
+               <number>5</number>
+              </property>
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <property name="bottomMargin">
+               <number>0</number>
+              </property>
+              <item>
+               <widget class="QLineEdit" name="search_bar">
+                <property name="readOnly">
+                 <bool>false</bool>
+                </property>
+                <property name="placeholderText">
+                 <string>Type a question here</string>
+                </property>
+                <property name="clearButtonEnabled">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="ocr_button">
+                <property name="minimumSize">
+                 <size>
+                  <width>30</width>
+                  <height>30</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>30</width>
+                  <height>30</height>
+                 </size>
+                </property>
+                <property name="font">
+                 <font>
+                  <family>Segoe MDL2 Assets</family>
+                  <pointsize>14</pointsize>
+                 </font>
+                </property>
+                <property name="toolTip">
+                 <string>Search text using OCR</string>
+                </property>
+                <property name="text">
+                 <string></string>
+                </property>
+                <property name="flat">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="paste_button">
+                <property name="minimumSize">
+                 <size>
+                  <width>30</width>
+                  <height>30</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>30</width>
+                  <height>30</height>
+                 </size>
+                </property>
+                <property name="sizeIncrement">
+                 <size>
+                  <width>0</width>
+                  <height>27</height>
+                 </size>
+                </property>
+                <property name="font">
+                 <font>
+                  <family>Segoe MDL2 Assets</family>
+                  <pointsize>14</pointsize>
+                 </font>
+                </property>
+                <property name="toolTip">
+                 <string>Search text in clipboard</string>
+                </property>
+                <property name="text">
+                 <string></string>
+                </property>
+                <property name="flat">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="search_button">
+                <property name="minimumSize">
+                 <size>
+                  <width>30</width>
+                  <height>30</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>30</width>
+                  <height>30</height>
+                 </size>
+                </property>
+                <property name="font">
+                 <font>
+                  <family>Segoe MDL2 Assets</family>
+                  <pointsize>14</pointsize>
+                 </font>
+                </property>
+                <property name="toolTip">
+                 <string>Search</string>
+                </property>
+                <property name="text">
+                 <string></string>
+                </property>
+                <property name="autoDefault">
+                 <bool>false</bool>
+                </property>
+                <property name="default">
+                 <bool>false</bool>
+                </property>
+                <property name="flat">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="stackedWidgetPage2">
+       <layout class="QGridLayout" name="gridLayout_3">
+        <property name="leftMargin">
+         <number>5</number>
+        </property>
+        <property name="topMargin">
+         <number>0</number>
+        </property>
+        <property name="rightMargin">
+         <number>5</number>
+        </property>
+        <property name="bottomMargin">
+         <number>0</number>
+        </property>
+        <property name="horizontalSpacing">
+         <number>6</number>
+        </property>
+        <property name="verticalSpacing">
+         <number>4</number>
+        </property>
+        <item row="0" column="0">
+         <widget class="QScrollArea" name="scrollArea">
+          <property name="frameShape">
+           <enum>QFrame::NoFrame</enum>
+          </property>
+          <property name="widgetResizable">
+           <bool>true</bool>
+          </property>
+          <widget class="QWidget" name="scrollAreaWidgetContents">
+           <property name="geometry">
+            <rect>
+             <x>0</x>
+             <y>0</y>
+             <width>379</width>
+             <height>631</height>
+            </rect>
+           </property>
+           <layout class="QGridLayout" name="gridLayout_8">
+            <item row="2" column="0">
+             <widget class="QGroupBox" name="groupBox_4">
+              <property name="title">
+               <string>Window</string>
+              </property>
+              <property name="flat">
+               <bool>true</bool>
+              </property>
+              <layout class="QGridLayout" name="gridLayout_9">
+               <item row="10" column="0">
+                <layout class="QGridLayout" name="gridLayout_7">
+                 <item row="0" column="1" colspan="2">
+                  <widget class="QComboBox" name="themeInput">
+                   <property name="minimumSize">
+                    <size>
+                     <width>150</width>
+                     <height>0</height>
+                    </size>
+                   </property>
+                   <item>
+                    <property name="text">
+                     <string>Auto</string>
+                    </property>
+                   </item>
+                   <item>
+                    <property name="text">
+                     <string>Light</string>
+                    </property>
+                   </item>
+                   <item>
+                    <property name="text">
+                     <string>Dark</string>
+                    </property>
+                   </item>
+                   <item>
+                    <property name="text">
+                     <string>Classic</string>
+                    </property>
+                   </item>
+                  </widget>
+                 </item>
+                 <item row="0" column="3">
+                  <spacer name="horizontalSpacer_5">
+                   <property name="orientation">
+                    <enum>Qt::Horizontal</enum>
+                   </property>
+                   <property name="sizeHint" stdset="0">
+                    <size>
+                     <width>40</width>
+                     <height>20</height>
+                    </size>
+                   </property>
+                  </spacer>
+                 </item>
+                 <item row="1" column="0">
+                  <widget class="QLabel" name="label_6">
+                   <property name="text">
+                    <string>Font Size:</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="0" column="0">
+                  <widget class="QLabel" name="label_7">
+                   <property name="minimumSize">
+                    <size>
+                     <width>100</width>
+                     <height>0</height>
+                    </size>
+                   </property>
+                   <property name="text">
+                    <string>Theme: </string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="1" column="2">
+                  <widget class="QSlider" name="font_size_slider">
+                   <property name="maximum">
+                    <number>20</number>
+                   </property>
+                   <property name="value">
+                    <number>10</number>
+                   </property>
+                   <property name="orientation">
+                    <enum>Qt::Horizontal</enum>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="1" column="1">
+                  <widget class="QSpinBox" name="font_size">
+                   <property name="minimumSize">
+                    <size>
+                     <width>70</width>
+                     <height>0</height>
+                    </size>
+                   </property>
+                   <property name="suffix">
+                    <string>px</string>
+                   </property>
+                   <property name="minimum">
+                    <number>5</number>
+                   </property>
+                   <property name="value">
+                    <number>10</number>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </item>
+               <item row="4" column="0">
+                <widget class="QCheckBox" name="setting_save_transp">
+                 <property name="text">
+                  <string>Remember window transparency</string>
+                 </property>
+                 <property name="checked">
+                  <bool>false</bool>
+                 </property>
+                </widget>
+               </item>
+               <item row="0" column="0">
+                <widget class="QCheckBox" name="setting_on_top">
+                 <property name="text">
+                  <string>Always on top</string>
+                 </property>
+                 <property name="checked">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+               <item row="2" column="0">
+                <widget class="QCheckBox" name="setting_rightclick_reset">
+                 <property name="text">
+                  <string>Right-click title bar to reset window position</string>
+                 </property>
+                 <property name="checked">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+               <item row="5" column="0">
+                <widget class="QCheckBox" name="setting_save_pos">
+                 <property name="text">
+                  <string>Remember window position</string>
+                 </property>
+                 <property name="checked">
+                  <bool>false</bool>
+                 </property>
+                </widget>
+               </item>
+               <item row="6" column="0">
+                <widget class="QCheckBox" name="setting_save_focus">
+                 <property name="text">
+                  <string>Remember state for window focus safety lock </string>
+                 </property>
+                 <property name="checked">
+                  <bool>false</bool>
+                 </property>
+                </widget>
+               </item>
+               <item row="1" column="0">
+                <widget class="QCheckBox" name="setting_hide_taskbar">
+                 <property name="text">
+                  <string>Don't show in taskbar</string>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </widget>
+            </item>
+            <item row="3" column="0" colspan="2">
+             <spacer name="verticalSpacer">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>40</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item row="0" column="0" colspan="2">
+             <widget class="QGroupBox" name="groupBox">
+              <property name="title">
+               <string>Global Hotkeys</string>
+              </property>
+              <property name="flat">
+               <bool>true</bool>
+              </property>
+              <layout class="QGridLayout" name="_2">
+               <item row="2" column="2">
+                <widget class="QPushButton" name="paste_key_clear">
+                 <property name="text">
+                  <string>Clear</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="0" column="0">
+                <widget class="QLabel" name="label_2">
+                 <property name="minimumSize">
+                  <size>
+                   <width>150</width>
+                   <height>0</height>
+                  </size>
+                 </property>
+                 <property name="text">
+                  <string>Hide/show window:</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="1" column="2">
+                <widget class="QPushButton" name="ocr_key_clear">
+                 <property name="text">
+                  <string>Clear</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="0" column="2">
+                <widget class="QPushButton" name="hide_show_key_clear">
+                 <property name="text">
+                  <string>Clear</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="1" column="1">
+                <widget class="QKeySequenceEdit" name="ocr_key">
+                 <property name="maximumSize">
+                  <size>
+                   <width>150</width>
+                   <height>16777215</height>
+                  </size>
+                 </property>
+                 <property name="keySequence">
+                  <string>Alt+Shift+O</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="1" column="0">
+                <widget class="QLabel" name="label_4">
+                 <property name="text">
+                  <string>OCR &amp; search:</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="2" column="1">
+                <widget class="QKeySequenceEdit" name="paste_key">
+                 <property name="maximumSize">
+                  <size>
+                   <width>150</width>
+                   <height>16777215</height>
+                  </size>
+                 </property>
+                 <property name="keySequence">
+                  <string>Alt+Shift+V</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="2" column="0">
+                <widget class="QLabel" name="label_5">
+                 <property name="text">
+                  <string>Paste &amp; search:</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="1" column="3">
+                <spacer name="horizontalSpacer">
+                 <property name="orientation">
+                  <enum>Qt::Horizontal</enum>
+                 </property>
+                 <property name="sizeHint" stdset="0">
+                  <size>
+                   <width>40</width>
+                   <height>20</height>
+                  </size>
+                 </property>
+                </spacer>
+               </item>
+               <item row="0" column="1">
+                <widget class="QKeySequenceEdit" name="hide_show_key">
+                 <property name="maximumSize">
+                  <size>
+                   <width>150</width>
+                   <height>16777215</height>
+                  </size>
+                 </property>
+                 <property name="keySequence">
+                  <string>Ctrl+D</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="3" column="1">
+                <widget class="QKeySequenceEdit" name="win_transp_key">
+                 <property name="maximumSize">
+                  <size>
+                   <width>150</width>
+                   <height>16777215</height>
+                  </size>
+                 </property>
+                </widget>
+               </item>
+               <item row="3" column="0">
+                <layout class="QHBoxLayout" name="horizontalLayout_4">
+                 <item>
+                  <widget class="QLabel" name="label_3">
+                   <property name="text">
+                    <string>Window opacity to:</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QSpinBox" name="win_trasp_value">
+                   <property name="frame">
+                    <bool>false</bool>
+                   </property>
+                   <property name="buttonSymbols">
+                    <enum>QAbstractSpinBox::NoButtons</enum>
+                   </property>
+                   <property name="suffix">
+                    <string>%</string>
+                   </property>
+                   <property name="minimum">
+                    <number>5</number>
+                   </property>
+                   <property name="maximum">
+                    <number>100</number>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <spacer name="horizontalSpacer_6">
+                   <property name="orientation">
+                    <enum>Qt::Horizontal</enum>
+                   </property>
+                   <property name="sizeType">
+                    <enum>QSizePolicy::Fixed</enum>
+                   </property>
+                   <property name="sizeHint" stdset="0">
+                    <size>
+                     <width>5</width>
+                     <height>20</height>
+                    </size>
+                   </property>
+                  </spacer>
+                 </item>
+                </layout>
+               </item>
+               <item row="3" column="2">
+                <widget class="QPushButton" name="win_transp_key_clear">
+                 <property name="text">
+                  <string>Clear</string>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </widget>
+            </item>
+            <item row="1" column="0">
+             <widget class="QGroupBox" name="groupBox_2">
+              <property name="title">
+               <string>Search</string>
+              </property>
+              <property name="flat">
+               <bool>true</bool>
+              </property>
+              <layout class="QGridLayout" name="gridLayout_6">
+               <item row="0" column="0">
+                <widget class="QCheckBox" name="setting_search_ocr">
+                 <property name="text">
+                  <string>Search after running OCR</string>
+                 </property>
+                 <property name="checked">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+               <item row="1" column="0">
+                <widget class="QCheckBox" name="setting_search_paste">
+                 <property name="text">
+                  <string>Search after pasting</string>
+                 </property>
+                 <property name="checked">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </widget>
+        </item>
+        <item row="1" column="0">
+         <layout class="QHBoxLayout" name="horizontalLayout_6">
+          <property name="spacing">
+           <number>6</number>
+          </property>
+          <property name="leftMargin">
+           <number>6</number>
+          </property>
+          <property name="topMargin">
+           <number>4</number>
+          </property>
+          <property name="rightMargin">
+           <number>6</number>
+          </property>
+          <property name="bottomMargin">
+           <number>4</number>
+          </property>
+          <item>
+           <spacer name="horizontalSpacer_3">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>591</width>
+              <height>27</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <widget class="QPushButton" name="back_button">
+            <property name="minimumSize">
+             <size>
+              <width>30</width>
+              <height>30</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>30</width>
+              <height>30</height>
+             </size>
+            </property>
+            <property name="font">
+             <font>
+              <family>Segoe MDL2 Assets</family>
+              <pointsize>14</pointsize>
+             </font>
+            </property>
+            <property name="text">
+             <string></string>
+            </property>
+            <property name="flat">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="back_label">
+            <property name="text">
+             <string>Go Back</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </widget>
+     </widget>
+    </item>
+    <item row="0" column="0">
+     <widget class="QFrame" name="titleBar">
+      <property name="autoFillBackground">
+       <bool>true</bool>
+      </property>
+      <layout class="QHBoxLayout" name="horizontalLayout">
+       <property name="spacing">
+        <number>6</number>
+       </property>
+       <property name="leftMargin">
+        <number>6</number>
+       </property>
+       <property name="topMargin">
+        <number>2</number>
+       </property>
+       <property name="rightMargin">
+        <number>6</number>
+       </property>
+       <property name="bottomMargin">
+        <number>2</number>
+       </property>
+       <item>
+        <widget class="QFrame" name="frame">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>181</width>
+           <height>0</height>
+          </size>
+         </property>
+         <layout class="QHBoxLayout" name="horizontalLayout_3">
+          <property name="spacing">
+           <number>6</number>
+          </property>
+          <property name="leftMargin">
+           <number>0</number>
+          </property>
+          <property name="topMargin">
+           <number>0</number>
+          </property>
+          <property name="rightMargin">
+           <number>0</number>
+          </property>
+          <property name="bottomMargin">
+           <number>0</number>
+          </property>
+          <item>
+           <widget class="QLabel" name="titleIcon">
+            <property name="maximumSize">
+             <size>
+              <width>20</width>
+              <height>20</height>
+             </size>
+            </property>
+            <property name="scaledContents">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="label">
+            <property name="text">
+             <string>SearchifyX</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <spacer name="horizontalSpacer_4">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item>
+        <widget class="QSlider" name="transparency_slider">
+         <property name="maximumSize">
+          <size>
+           <width>100</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="toolTip">
+          <string>Window transparency</string>
+         </property>
+         <property name="minimum">
+          <number>15</number>
+         </property>
+         <property name="maximum">
+          <number>100</number>
+         </property>
+         <property name="value">
+          <number>95</number>
+         </property>
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="tickPosition">
+          <enum>QSlider::NoTicks</enum>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="toggle_noactive_style">
+         <property name="minimumSize">
+          <size>
+           <width>30</width>
+           <height>30</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>30</width>
+           <height>30</height>
+          </size>
+         </property>
+         <property name="font">
+          <font>
+           <family>Segoe MDL2 Assets</family>
+           <pointsize>14</pointsize>
+          </font>
+         </property>
+         <property name="toolTip">
+          <string>Unlock window (allow focus)</string>
+         </property>
+         <property name="text">
+          <string></string>
+         </property>
+         <property name="checkable">
+          <bool>true</bool>
+         </property>
+         <property name="checked">
+          <bool>false</bool>
+         </property>
+         <property name="flat">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="minimize_button">
+         <property name="minimumSize">
+          <size>
+           <width>30</width>
+           <height>30</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>30</width>
+           <height>30</height>
+          </size>
+         </property>
+         <property name="font">
+          <font>
+           <family>Segoe MDL2 Assets</family>
+           <pointsize>14</pointsize>
+          </font>
+         </property>
+         <property name="text">
+          <string></string>
+         </property>
+         <property name="checkable">
+          <bool>false</bool>
+         </property>
+         <property name="flat">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="close_button">
+         <property name="minimumSize">
+          <size>
+           <width>30</width>
+           <height>30</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>30</width>
+           <height>30</height>
+          </size>
+         </property>
+         <property name="font">
+          <font>
+           <family>Segoe MDL2 Assets</family>
+           <pointsize>14</pointsize>
+          </font>
+         </property>
+         <property name="text">
+          <string></string>
+         </property>
+         <property name="checkable">
+          <bool>false</bool>
+         </property>
+         <property name="flat">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+ </widget>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>font_size_slider</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>font_size</receiver>
+   <slot>setValue(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>242</x>
+     <y>315</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>150</x>
+     <y>311</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>font_size</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>font_size_slider</receiver>
+   <slot>setValue(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>172</x>
+     <y>324</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>285</x>
+     <y>315</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+</ui>

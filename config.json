@@ -1,0 +1,20 @@
+{
+    "quizlet": true,
+    "quizizz": true,
+    "brainly": false,
+    "hide_show_key": "Ctrl+D",
+    "ocr_key": "Ctrl+Shift+X",
+    "paste_key": "Ctrl+Shift+V",
+    "win_transp_key": "",
+    "win_transp_value": 5,
+    "search_ocr": true,
+    "search_paste": true,
+    "save_focus": false,
+    "save_transp": 97,
+    "save_pos": null,
+    "rclick_reset": true,
+    "on_top": true,
+    "hide_taskbar": false,
+    "theme": 0,
+    "font_size": 10
+}

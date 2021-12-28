@@ -1,0 +1,4 @@
+tesseract-ocr/
+# tesserect-ocr needs to be redownloaded from link provided in README.md
+__pycache__/
+windoweffect/__pycache__/
