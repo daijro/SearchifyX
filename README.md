@@ -3,6 +3,9 @@
 
 **SearchifyX**, predecessor to *[Searchify](https://www.reddit.com/user/daijro/comments/jg7wee/searchify_quizletbrainly_searcher/)*, is a ***fast*** Quizlet, Quizizz, and Brainly webscraper with various stealth features.
 
+SearchifyX lets you easily query a quiz question through different answer websites *(similar to Socratic on mobile)*, and sort them based on how similar they are to your query. It also includes a screen OCR scanner, hotkeys, and other features for stealthy use.
+
+
 <hr width=30>
 
 #### SearchifyX in action
@@ -14,11 +17,11 @@
 
 ## Download
 
-#### Binaries
+### Binaries
 
 Download Windows binaries [here](https://github.com/daijro/SearchifyX/releases)
 
-#### Running from source code
+### Running from source code
 
 Install the [Python 3.8](https://www.python.org/downloads/release/python-389/) dependencies:
 
@@ -60,13 +63,11 @@ Optional arguments:
 ---
 
 
-### What it does
+## What it does
 
 -   Searches Bing for Quizlet, Quizizz, and Brainly results
 
 -   Sort results by how similar the identified question is to the input question
-
--   Various different options for input for stealthy use
 
 <hr width=30>
 
@@ -90,9 +91,10 @@ Optional arguments:
 
 <hr width=30>
 
+
 ### Window switching safety lock
 
-Many websites can detect when the window focus is lost. SearchifyX includes features such as hotkeys and a __window switching safety lock__ to prevent websites from knowing your are using a differenty window.
+Many websites can detect when the window focus is lost. SearchifyX includes a __window switching safety lock__ to prevent websites from knowing you are using a different window.
 
 *Note: The text search bar does not work when the Window switch safety lock is enabled. It is designed to be used with the OCR tool and Paste & Search tool.*
 
@@ -100,6 +102,25 @@ Here is a [demo website](https://www.codingwithjesse.com/demo/2007-05-16-detect-
 
 ![window safety lock](https://i.imgur.com/mGBAV1K.gif)
 
+<hr width=30>
+
+### Improvements from *Searchify*
+
+- Completely rewritten from scratch
+
+- Added stealth features ([listed above](https://github.com/daijro/SearchifyX#stealth-options))
+
+- Added screen OCR scanner
+
+- Added global hotkeys
+
+- MAJOR changes to UI
+
+- MAJOR changes web scraper code (averages 1-2 seconds now; uses significantly less CPU)
+
+- Completely fixed the "Too many requests" error
+
+- Significantly more stable & returns better results
 
 ---
 
