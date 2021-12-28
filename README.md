@@ -10,11 +10,15 @@
 ![in action](https://user-images.githubusercontent.com/72637910/147515480-236fe392-6282-44bc-b888-54f15adeb523.gif)
 
 
-<hr width=30>
+---
 
 ## Download
 
-Windows binaries are not avaliable yet at this moment.
+#### Binaries
+
+Download Windows binaries [here](https://github.com/daijro/SearchifyX/releases)
+
+#### Running from source code
 
 Install the [Python 3.8](https://www.python.org/downloads/release/python-389/) dependencies:
 
