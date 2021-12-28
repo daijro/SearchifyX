@@ -30,6 +30,35 @@ pyperclip
 
 You also need to download [tesseract-ocr](https://cdn.discordapp.com/attachments/714922631693860956/925180968808087572/tesseract-ocr.7z) and extract it to the root directory to use OCR.
 
+<hr width=30>
+
+## CLI usage
+
+An alternative for Linux/Mac OS users is to use [`scraper.py`](https://github.com/daijro/SearchifyX/blob/main/scraper.py) as a CLI tool.
+
+Usage:
+```
+scraper.py [-h] [--query QUERY] [--output OUTPUT] [--sites SITES]
+```
+
+Required arguments:
+
+```
+--query QUERY, -q QUERY
+                      query to search for
+```
+
+Optional arguments:
+
+```
+-h, --help            show this help message and exit
+
+--output OUTPUT, -o OUTPUT
+                      output file (optional)
+--sites SITES, -s SITES
+                      question sources quizlet,quizizz,brainly (comma seperated list)
+```
+
 ---
 
 
@@ -41,6 +70,7 @@ You also need to download [tesseract-ocr](https://cdn.discordapp.com/attachments
 
 -   Various different options for input for stealthy use
 
+<hr width=30>
 
 ### Stealth options
 
@@ -56,8 +86,11 @@ You also need to download [tesseract-ocr](https://cdn.discordapp.com/attachments
 
     - Quickly change window opacity hotkey
 
+- Change window opacity (slider in title bar)
+
 - Option to not show in taskbar
 
+<hr width=30>
 
 ### Window switching safety lock
 
@@ -90,3 +123,10 @@ Here is a [demo website](https://www.codingwithjesse.com/demo/2007-05-16-detect-
 #### Settings page
 
 ![settings](https://i.imgur.com/iOciyxd.png)
+
+
+---
+
+### Disclaimer
+
+The purpose of this program is to provide an example of asynchronous webscraping and data gathering in Python. I am not in any way attempting to promote cheating, and I am not responsible for any misuse of this tool. This tool was created strictly for educational purposes only.
