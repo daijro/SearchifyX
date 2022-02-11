@@ -3,7 +3,7 @@
 
 **SearchifyX**, predecessor to *[Searchify](https://www.reddit.com/user/daijro/comments/jg7wee/searchify_quizletbrainly_searcher/)*, is a ***fast*** Quizlet, Quizizz, and Brainly webscraper with various stealth features.
 
-SearchifyX lets you easily query a quiz question through different answer websites *(similar to Socratic on mobile)*, and sort them based on how similar they are to your query. It also includes a screen OCR scanner, hotkeys, and other features for stealthy use.
+SearchifyX lets you easily query a question through different answer websites *(similar to Socratic on mobile)*, and sort them based on how similar they are to your query. It also includes a screen OCR scanner, hotkeys, and other features for stealthy use.
 
 
 <hr width=30>
@@ -29,7 +29,7 @@ Install the [Python 3.8](https://www.python.org/downloads/release/python-389/) d
 python -m pip install requirements.txt
 ```
 
-You also need to download [tesseract-ocr](https://cdn.discordapp.com/attachments/714922631693860956/925180968808087572/tesseract-ocr.7z) and extract it to the root directory to use the OCR tool.
+You also need to download [tesseract-ocr](https://www.dropbox.com/s/abuo044ayx4vlex/tesseract-ocr.7z?dl=1) and extract it to the root directory to use the OCR tool.
 
 <hr width=30>
 
