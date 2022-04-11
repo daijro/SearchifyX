@@ -19,7 +19,7 @@ import tkinter as tk
 root = tk.Tk()
 root.withdraw()
 
-from scraper import Searchify
+from scraper import Searchify, SearchEngine
 from textshot import *
 from windoweffect import WindowEffect
 
@@ -96,17 +96,13 @@ class UI(QMainWindow):
         self.status_label    = self.findChild(QtWidgets.QLabel,       "status_label")
         self.quizlet_button  = self.findChild(QtWidgets.QPushButton,  "quizlet_button")
         self.quizizz_button  = self.findChild(QtWidgets.QPushButton,  "quizizz_button")
-        self.brainly_button  = self.findChild(QtWidgets.QPushButton,  "brainly_button")
         self.settings_button = self.findChild(QtWidgets.QPushButton,  "settings_button")
 
         self.quizlet_button.setChecked(self.conf['quizlet'])
         self.quizizz_button.setChecked(self.conf['quizizz'])
-        self.brainly_button.setChecked(self.conf['brainly'])
 
         self.quizlet_button.toggled.connect(lambda: self.updatejson('quizlet'))
         self.quizizz_button.toggled.connect(lambda: self.updatejson('quizizz'))
-        self.brainly_button.toggled.connect(lambda: self.updatejson('brainly'))
-
 
         self.settings_button.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(1))
 
@@ -115,7 +111,6 @@ class UI(QMainWindow):
 
         self.quizizz_button.setIcon(QtGui.QIcon(resource_path("img\\quizizz.png")))
         self.quizlet_button.setIcon(QtGui.QIcon(resource_path("img\\quizlet.png")))
-        self.brainly_button.setIcon(QtGui.QIcon(resource_path("img\\brainly.png")))
         self.titleIcon.setPixmap(QtGui.QPixmap(resource_path("img\\search.png")))
 
 
@@ -203,6 +198,11 @@ class UI(QMainWindow):
 
         self.setting_on_top.setChecked(self.conf['on_top'])
         self.setting_on_top.toggled.connect(lambda: self.set_window_on_top())
+        
+        self.search_engine_combo = self.findChild(QtWidgets.QComboBox, "search_engine_combo")
+        self.search_engine_combo.setCurrentIndex(self.conf['search_engine'])
+        self.search_engine = SearchEngine(self.search_engine_combo.currentText().lower())
+        self.search_engine_combo.currentIndexChanged.connect(lambda: self.run_search_engine())
 
         # window theme
         self.themeInput = self.findChild(QtWidgets.QComboBox, "themeInput")
@@ -291,7 +291,7 @@ class UI(QMainWindow):
         font_size = self.font_size.value()
 
         # icon sizes
-        for obj in [self.quizizz_button, self.quizlet_button, self.brainly_button]:
+        for obj in [self.quizizz_button, self.quizlet_button]:
             obj.setIconSize(QtCore.QSize(font_size*2, font_size*2))
 
 
@@ -313,6 +313,10 @@ class UI(QMainWindow):
 
     # calling scraper and adding to ui
     
+    def run_search_engine(self):
+        self.search_engine = SearchEngine(self.search_engine_combo.currentText().lower())
+        self.updatejson('search_engine')
+    
     def run_searcher(self):
         query = self.search_bar.text().strip()
 
@@ -328,14 +332,13 @@ class UI(QMainWindow):
 
         if self.quizizz_button.isChecked(): sites.append('quizizz')
         if self.quizlet_button.isChecked(): sites.append('quizlet')
-        if self.brainly_button.isChecked(): sites.append('brainly')
 
         if not sites:
             self.status_label.setText('Please select at least one site.')
             self.search_frame.setEnabled(True)
             return
         
-        searchify = Searchify(query, sites)
+        searchify = Searchify(query, sites, self.search_engine)
 
         t = Thread(target=searchify.main)
         t.daemon = True
@@ -530,7 +533,6 @@ class UI(QMainWindow):
             # keybinds
             "quizlet":         lambda: self.quizlet_button.isChecked(),
             "quizizz":         lambda: self.quizizz_button.isChecked(),
-            "brainly":         lambda: self.brainly_button.isChecked(),
             "hide_show_key":   lambda: self.hide_show_key.keySequence().toString(),
             "ocr_key":         lambda: self.ocr_key.keySequence().toString(),
             "paste_key":       lambda: self.paste_key.keySequence().toString(),
@@ -550,6 +552,7 @@ class UI(QMainWindow):
             "hide_taskbar":    lambda: self.setting_hide_taskbar.isChecked(),
             "theme":           lambda: self.themeInput.currentIndex(),
             "font_size":       lambda: self.font_size.value(),
+            "search_engine":   lambda: self.search_engine_combo.currentIndex(),
         }
 
     def updatejson(self, key):
