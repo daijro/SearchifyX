@@ -134,8 +134,15 @@ class Snipper(QtWidgets.QWidget):
             return super().mouseReleaseEvent(event)
 
         self.hide()
+        QtWidgets.QApplication.restoreOverrideCursor()
         QtWidgets.QApplication.processEvents()
-        shot = self.screen.copy(QtCore.QRect(self.start, self.end))
+        
+        shot = self.screen.copy(
+            min(self.start.x(), self.end.x()),
+            min(self.start.y(), self.end.y()),
+            abs(self.start.x() - self.end.x()),
+            abs(self.start.y() - self.end.y()),
+        )
         self.processImage(shot)
         self.quit_app()
         print('done')

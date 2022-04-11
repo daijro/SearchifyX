@@ -204,28 +204,6 @@
                </property>
               </widget>
              </item>
-             <item>
-              <widget class="QPushButton" name="brainly_button">
-               <property name="minimumSize">
-                <size>
-                 <width>30</width>
-                 <height>30</height>
-                </size>
-               </property>
-               <property name="text">
-                <string>Brainly</string>
-               </property>
-               <property name="checkable">
-                <bool>true</bool>
-               </property>
-               <property name="checked">
-                <bool>false</bool>
-               </property>
-               <property name="flat">
-                <bool>true</bool>
-               </property>
-              </widget>
-             </item>
             </layout>
            </item>
            <item row="0" column="0" colspan="2">
@@ -404,9 +382,9 @@
            <property name="geometry">
             <rect>
              <x>0</x>
-             <y>0</y>
-             <width>379</width>
-             <height>631</height>
+             <y>-77</y>
+             <width>656</width>
+             <height>465</height>
             </rect>
            </property>
            <layout class="QGridLayout" name="gridLayout_8">
@@ -775,6 +753,16 @@
                <bool>true</bool>
               </property>
               <layout class="QGridLayout" name="gridLayout_6">
+               <item row="1" column="0">
+                <widget class="QCheckBox" name="setting_search_paste">
+                 <property name="text">
+                  <string>Search after pasting</string>
+                 </property>
+                 <property name="checked">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
                <item row="0" column="0">
                 <widget class="QCheckBox" name="setting_search_ocr">
                  <property name="text">
@@ -785,15 +773,76 @@
                  </property>
                 </widget>
                </item>
-               <item row="1" column="0">
-                <widget class="QCheckBox" name="setting_search_paste">
-                 <property name="text">
-                  <string>Search after pasting</string>
-                 </property>
-                 <property name="checked">
-                  <bool>true</bool>
-                 </property>
-                </widget>
+               <item row="2" column="0" colspan="2">
+                <layout class="QGridLayout" name="gridLayout_5">
+                 <item row="0" column="2">
+                  <widget class="QComboBox" name="search_engine_combo">
+                   <property name="minimumSize">
+                    <size>
+                     <width>150</width>
+                     <height>0</height>
+                    </size>
+                   </property>
+                   <item>
+                    <property name="text">
+                     <string>Bing</string>
+                    </property>
+                   </item>
+                   <item>
+                    <property name="text">
+                     <string>Google</string>
+                    </property>
+                   </item>
+                   <item>
+                    <property name="text">
+                     <string>Startpage</string>
+                    </property>
+                   </item>
+                  </widget>
+                 </item>
+                 <item row="0" column="0">
+                  <widget class="QLabel" name="label_8">
+                   <property name="minimumSize">
+                    <size>
+                     <width>100</width>
+                     <height>0</height>
+                    </size>
+                   </property>
+                   <property name="text">
+                    <string>Search engine:</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="0" column="3">
+                  <spacer name="horizontalSpacer_7">
+                   <property name="orientation">
+                    <enum>Qt::Horizontal</enum>
+                   </property>
+                   <property name="sizeHint" stdset="0">
+                    <size>
+                     <width>40</width>
+                     <height>20</height>
+                    </size>
+                   </property>
+                  </spacer>
+                 </item>
+                 <item row="0" column="1">
+                  <spacer name="horizontalSpacer_8">
+                   <property name="orientation">
+                    <enum>Qt::Horizontal</enum>
+                   </property>
+                   <property name="sizeType">
+                    <enum>QSizePolicy::Fixed</enum>
+                   </property>
+                   <property name="sizeHint" stdset="0">
+                    <size>
+                     <width>70</width>
+                     <height>20</height>
+                    </size>
+                   </property>
+                  </spacer>
+                 </item>
+                </layout>
                </item>
               </layout>
              </widget>
@@ -972,7 +1021,7 @@
           <string>Window transparency</string>
          </property>
          <property name="minimum">
-          <number>15</number>
+          <number>5</number>
          </property>
          <property name="maximum">
           <number>100</number>
