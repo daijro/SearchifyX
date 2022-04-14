@@ -26,7 +26,7 @@ Download Windows binaries [here](https://github.com/daijro/SearchifyX/releases)
 Install the [Python 3.8](https://www.python.org/downloads/release/python-389/) dependencies:
 
 ```
-python -m pip install requirements.txt
+python -m pip install -r requirements.txt
 ```
 
 You also need to download [tesseract-ocr](https://www.dropbox.com/s/abuo044ayx4vlex/tesseract-ocr.7z?dl=1) and extract it to the root directory to use the OCR tool.
