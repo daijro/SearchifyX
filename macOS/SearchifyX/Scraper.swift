@@ -6,7 +6,6 @@
 //
 
 import Foundation
-import PythonKit
 
 class Scraper {
     func search(query: String, sites: String, engine: String) -> [Flashcard] {
