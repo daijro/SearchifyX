@@ -65,11 +65,16 @@ struct ContentView: View {
             .disabled(searching != false)
             .padding()
             
-            Table(cards, selection: $selected) {
-                TableColumn("Question", value: \.question)
-                TableColumn("Answer", value: \.answer)
-                TableColumn("Similarity", value: \.similarity)
-                TableColumn("URL", value: \.url)
+            ZStack {
+                Table(cards, selection: $selected) {
+                    TableColumn("Question", value: \.question)
+                    TableColumn("Answer", value: \.answer)
+                    TableColumn("Similarity", value: \.similarity)
+                    TableColumn("URL", value: \.url)
+                }
+                if searching {
+                    ProgressView()
+                }
             }
             
             HStack {
