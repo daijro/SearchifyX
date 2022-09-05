@@ -12,5 +12,5 @@ struct Flashcard: Identifiable, Codable {
     let answer: String
     let url: String
     let similarity: String
-    var id = UUID()
+    let id = UUID()
 }

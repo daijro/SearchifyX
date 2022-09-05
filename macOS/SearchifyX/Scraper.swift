@@ -31,9 +31,16 @@ class Scraper {
         }
         catch {
             print("Error occurred trying to run the scraper")
+            return []
         }
         
-        let result = try? JSONDecoder().decode([Flashcard].self, from: json.data(using: .utf8)!)
-        return result!
+        do {
+            let result = try JSONDecoder().decode([Flashcard].self, from: json.data(using: .utf8)!)
+            return result
+        }
+        catch {
+            print("An unexpected error occurred: \(error)")
+            return []
+        }
     }
 }

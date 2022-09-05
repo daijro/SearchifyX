@@ -36,8 +36,10 @@ struct ContentView: View {
                             sites.append("quizlet")
                         }
                         
-                        cards = scraper.search(query: question, sites: sites.joined(separator: ","), engine: engine)
-                        searching = false
+                        DispatchQueue.global(qos: .userInitiated).async {
+                                cards = scraper.search(query: question, sites: sites.joined(separator: ","), engine: engine)
+                                searching = false
+                        }
                     },
                     label: {
                         Image(systemName: "magnifyingglass")
