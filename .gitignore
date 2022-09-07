@@ -6,6 +6,9 @@ windoweffect/__pycache__/
 # scraper.app must be rebuilt because of the amount of files
 macOS/SearchifyX/scraper.app
 
+# Xcode
+xcuserdata/
+
 # General
 .DS_Store
 .AppleDouble

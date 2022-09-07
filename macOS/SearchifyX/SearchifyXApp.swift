@@ -11,7 +11,7 @@ import SwiftUI
 struct SearchifyXApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            ContentView(isPanel: false)
         }
     }
 }

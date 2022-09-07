@@ -17,11 +17,29 @@ struct ContentView: View {
     @State var selected: Flashcard.ID?
     @State var searching: Bool = false
     @State var engine: String = "google"
+    @State var showingPanel: Bool = false
+    
+    var isPanel: Bool
     
     var body: some View {
         VStack {
             HStack {
+                if isPanel == false {
+                    Button(action: {
+                        let ep = FloatingPanel(contentRect: NSRect(x: 0, y: 0, width: 900, height: 450), backing: .buffered, defer: false)
+                        
+                        ep.title = "Hidden SearchifyX"
+                        ep.contentView = NSHostingView(rootView: ContentView(isPanel: true))
+                        
+                        ep.center()
+                        ep.orderFront(nil)
+                        ep.makeKey()
+                    }, label: {
+                        Image(systemName: "eye.slash")
+                    })
+                }
                 TextField("Search a question here", text: $question)
+                    .lineLimit(nil)
                 Button(
                     action: {
                         searching = true
@@ -61,6 +79,16 @@ struct ContentView: View {
                         Image(systemName: "doc.on.clipboard")
                     }
                 )
+                Button(
+                    action: {
+                        DispatchQueue.global(qos: .userInitiated).async {
+                            question = scraper.ocr()
+                        }
+                    },
+                    label: {
+                        Image(systemName: "eye")
+                    }
+                )
             }
             .disabled(searching != false)
             .padding()
@@ -72,6 +100,7 @@ struct ContentView: View {
                     TableColumn("Similarity", value: \.similarity)
                     TableColumn("URL", value: \.url)
                 }
+                
                 if searching {
                     ProgressView()
                 }
@@ -121,6 +150,6 @@ struct ContentView: View {
 
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
-        ContentView()
+        ContentView(isPanel: false)
     }
 }
