@@ -19,6 +19,9 @@ struct ContentView: View {
     @State var engine: String = "google"
     @State var showingPanel: Bool = false
     
+    @AppStorage("runAfterOcr") var runAfterOcr: Bool = false
+    @AppStorage("runAfterPaste") var runAfterPaste: Bool = false
+    
     var isPanel: Bool
     
     var body: some View {
@@ -42,22 +45,7 @@ struct ContentView: View {
                     .lineLimit(nil)
                 Button(
                     action: {
-                        searching = true
-                        print(engine)
-                        
-                        var sites: [String] = []
-                        
-                        if enableQuizizz {
-                            sites.append("quizizz")
-                        }
-                        if enableQuizlet {
-                            sites.append("quizlet")
-                        }
-                        
-                        DispatchQueue.global(qos: .userInitiated).async {
-                                cards = scraper.search(query: question, sites: sites.joined(separator: ","), engine: engine)
-                                searching = false
-                        }
+                        searchQuestion()
                     },
                     label: {
                         Image(systemName: "magnifyingglass")
@@ -74,6 +62,10 @@ struct ContentView: View {
                         }
                         
                         question = clipboardItems[0]
+                        
+                        if runAfterPaste {
+                            searchQuestion()
+                        }
                     },
                     label: {
                         Image(systemName: "doc.on.clipboard")
@@ -83,6 +75,10 @@ struct ContentView: View {
                     action: {
                         DispatchQueue.global(qos: .userInitiated).async {
                             question = scraper.ocr()
+                            
+                            if runAfterOcr {
+                                searchQuestion()
+                            }
                         }
                     },
                     label: {
@@ -144,6 +140,24 @@ struct ContentView: View {
                 }
             }
             .padding()
+        }
+    }
+    
+    func searchQuestion() {
+        searching = true
+        
+        var sites: [String] = []
+        
+        if enableQuizizz {
+            sites.append("quizizz")
+        }
+        if enableQuizlet {
+            sites.append("quizlet")
+        }
+        
+        DispatchQueue.global(qos: .userInitiated).async {
+                cards = scraper.search(query: question, sites: sites.joined(separator: ","), engine: engine)
+                searching = false
         }
     }
 }
