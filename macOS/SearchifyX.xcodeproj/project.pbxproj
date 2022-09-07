@@ -14,6 +14,9 @@
 		4214677528C1D99300E9D706 /* Scraper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4214677428C1D99300E9D706 /* Scraper.swift */; };
 		4214677928C2887F00E9D706 /* scraper.app in Resources */ = {isa = PBXBuildFile; fileRef = 4214677828C2887F00E9D706 /* scraper.app */; };
 		42E9576F28C80FA300BF7B3B /* FloatingPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42E9576E28C80FA300BF7B3B /* FloatingPanel.swift */; };
+		42E9579B28C84C0E00BF7B3B /* KeyboardShortcuts in Frameworks */ = {isa = PBXBuildFile; productRef = 42E9579A28C84C0E00BF7B3B /* KeyboardShortcuts */; };
+		42E9579D28C84C6900BF7B3B /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42E9579C28C84C6900BF7B3B /* SettingsView.swift */; };
+		42E9579F28C84DAC00BF7B3B /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42E9579E28C84DAC00BF7B3B /* Constants.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -25,6 +28,8 @@
 		4214677428C1D99300E9D706 /* Scraper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Scraper.swift; sourceTree = "<group>"; };
 		4214677828C2887F00E9D706 /* scraper.app */ = {isa = PBXFileReference; lastKnownFileType = wrapper.application; path = scraper.app; sourceTree = "<group>"; };
 		42E9576E28C80FA300BF7B3B /* FloatingPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloatingPanel.swift; sourceTree = "<group>"; };
+		42E9579C28C84C6900BF7B3B /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		42E9579E28C84DAC00BF7B3B /* Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -32,6 +37,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				42E9579B28C84C0E00BF7B3B /* KeyboardShortcuts in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -64,6 +70,8 @@
 				4214676F28C1CFB500E9D706 /* Flashcard.swift */,
 				4214677428C1D99300E9D706 /* Scraper.swift */,
 				42E9576E28C80FA300BF7B3B /* FloatingPanel.swift */,
+				42E9579C28C84C6900BF7B3B /* SettingsView.swift */,
+				42E9579E28C84DAC00BF7B3B /* Constants.swift */,
 			);
 			path = SearchifyX;
 			sourceTree = "<group>";
@@ -85,6 +93,7 @@
 			);
 			name = SearchifyX;
 			packageProductDependencies = (
+				42E9579A28C84C0E00BF7B3B /* KeyboardShortcuts */,
 			);
 			productName = SearchifyX;
 			productReference = 4214674128C1C5EF00E9D706 /* SearchifyX.app */;
@@ -115,6 +124,7 @@
 			);
 			mainGroup = 4214673828C1C5EF00E9D706;
 			packageReferences = (
+				42E9579928C84C0E00BF7B3B /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */,
 			);
 			productRefGroup = 4214674228C1C5EF00E9D706 /* Products */;
 			projectDirPath = "";
@@ -145,6 +155,8 @@
 				4214677528C1D99300E9D706 /* Scraper.swift in Sources */,
 				4214677028C1CFB600E9D706 /* Flashcard.swift in Sources */,
 				4214674728C1C5EF00E9D706 /* ContentView.swift in Sources */,
+				42E9579D28C84C6900BF7B3B /* SettingsView.swift in Sources */,
+				42E9579F28C84DAC00BF7B3B /* Constants.swift in Sources */,
 				4214674528C1C5EF00E9D706 /* SearchifyXApp.swift in Sources */,
 				42E9576F28C80FA300BF7B3B /* FloatingPanel.swift in Sources */,
 			);
@@ -348,6 +360,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		42E9579928C84C0E00BF7B3B /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sindresorhus/KeyboardShortcuts";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		42E9579A28C84C0E00BF7B3B /* KeyboardShortcuts */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 42E9579928C84C0E00BF7B3B /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */;
+			productName = KeyboardShortcuts;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 4214673928C1C5EF00E9D706 /* Project object */;
 }
