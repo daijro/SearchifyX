@@ -3,5 +3,5 @@
 # Remove build directories
 rm -r ./build/
 rm -r ./dist/
-
-rm setup.py
+rm scraper.spec
+rm ./SearchifyX/scraper

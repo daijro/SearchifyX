@@ -1,13 +1,4 @@
-//
-//  ContentView.swift
-//  SearchifyX
-//
-//  Created by Jose Molina on 9/2/22.
-//
-
 import SwiftUI
-
-let scraper = Scraper()
 
 struct ContentView: View {
     @State var question: String = ""
@@ -23,20 +14,26 @@ struct ContentView: View {
     @AppStorage("runAfterPaste") var runAfterPaste: Bool = false
     
     var isPanel: Bool
+    var hasShown: Bool?
+    var skQuery: String?
+    
+    init(isPanel: Bool, question q: String?) {
+        self.isPanel = isPanel
+        if q != nil {
+            skQuery = q!
+            hasShown = true
+        }
+        else {
+            hasShown = false
+        }
+    }
     
     var body: some View {
         VStack {
             HStack {
                 if isPanel == false {
                     Button(action: {
-                        let ep = FloatingPanel(contentRect: NSRect(x: 0, y: 0, width: 900, height: 450), backing: .buffered, defer: false)
-                        
-                        ep.title = "Hidden SearchifyX"
-                        ep.contentView = NSHostingView(rootView: ContentView(isPanel: true))
-                        
-                        ep.center()
-                        ep.orderFront(nil)
-                        ep.makeKey()
+                        Scraper.makeHiddenWindow(question: nil)
                     }, label: {
                         Image(systemName: "eye.slash")
                     })
@@ -45,7 +42,7 @@ struct ContentView: View {
                     .lineLimit(nil)
                 Button(
                     action: {
-                        searchQuestion()
+                        searchQuestion(query: self.question)
                     },
                     label: {
                         Image(systemName: "magnifyingglass")
@@ -54,17 +51,10 @@ struct ContentView: View {
                 )
                 Button(
                     action: {
-                        var clipboardItems: [String] = []
-                        for element in NSPasteboard.general.pasteboardItems! {
-                            if let str = element.string(forType: NSPasteboard.PasteboardType(rawValue: "public.utf8-plain-text")) {
-                                clipboardItems.append(str)
-                            }
-                        }
-                        
-                        question = clipboardItems[0]
+                        question = Scraper.getClipboard()
                         
                         if runAfterPaste {
-                            searchQuestion()
+                            searchQuestion(query: self.question)
                         }
                     },
                     label: {
@@ -74,10 +64,10 @@ struct ContentView: View {
                 Button(
                     action: {
                         DispatchQueue.global(qos: .userInitiated).async {
-                            question = scraper.ocr()
+                            question = Scraper.ocr()
                             
                             if runAfterOcr {
-                                searchQuestion()
+                                searchQuestion(query: self.question)
                             }
                         }
                     },
@@ -141,9 +131,15 @@ struct ContentView: View {
             }
             .padding()
         }
+        .onAppear {
+            if hasShown! {
+                self.question = skQuery!
+                searchQuestion(query: skQuery!)
+            }
+        }
     }
     
-    func searchQuestion() {
+    func searchQuestion(query: String) {
         searching = true
         
         var sites: [String] = []
@@ -156,7 +152,7 @@ struct ContentView: View {
         }
         
         DispatchQueue.global(qos: .userInitiated).async {
-                cards = scraper.search(query: question, sites: sites.joined(separator: ","), engine: engine)
+                cards = Scraper.search(query: query, sites: sites.joined(separator: ","), engine: engine)
                 searching = false
         }
     }
@@ -164,6 +160,6 @@ struct ContentView: View {
 
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
-        ContentView(isPanel: false)
+        ContentView(isPanel: false, question: nil)
     }
 }

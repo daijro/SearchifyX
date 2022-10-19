@@ -12,7 +12,7 @@
 		4214674928C1C5F200E9D706 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4214674828C1C5F200E9D706 /* Assets.xcassets */; };
 		4214677028C1CFB600E9D706 /* Flashcard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4214676F28C1CFB500E9D706 /* Flashcard.swift */; };
 		4214677528C1D99300E9D706 /* Scraper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4214677428C1D99300E9D706 /* Scraper.swift */; };
-		4214677928C2887F00E9D706 /* scraper.app in Resources */ = {isa = PBXBuildFile; fileRef = 4214677828C2887F00E9D706 /* scraper.app */; };
+		42C95D932900657A008936E3 /* scraper in Resources */ = {isa = PBXBuildFile; fileRef = 42C95D922900657A008936E3 /* scraper */; };
 		42E9576F28C80FA300BF7B3B /* FloatingPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42E9576E28C80FA300BF7B3B /* FloatingPanel.swift */; };
 		42E9579B28C84C0E00BF7B3B /* KeyboardShortcuts in Frameworks */ = {isa = PBXBuildFile; productRef = 42E9579A28C84C0E00BF7B3B /* KeyboardShortcuts */; };
 		42E9579D28C84C6900BF7B3B /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42E9579C28C84C6900BF7B3B /* SettingsView.swift */; };
@@ -26,7 +26,7 @@
 		4214674828C1C5F200E9D706 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		4214676F28C1CFB500E9D706 /* Flashcard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Flashcard.swift; sourceTree = "<group>"; };
 		4214677428C1D99300E9D706 /* Scraper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Scraper.swift; sourceTree = "<group>"; };
-		4214677828C2887F00E9D706 /* scraper.app */ = {isa = PBXFileReference; lastKnownFileType = wrapper.application; path = scraper.app; sourceTree = "<group>"; };
+		42C95D922900657A008936E3 /* scraper */ = {isa = PBXFileReference; lastKnownFileType = folder; path = scraper; sourceTree = "<group>"; };
 		42E9576E28C80FA300BF7B3B /* FloatingPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloatingPanel.swift; sourceTree = "<group>"; };
 		42E9579C28C84C6900BF7B3B /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		42E9579E28C84DAC00BF7B3B /* Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
@@ -63,7 +63,7 @@
 		4214674328C1C5EF00E9D706 /* SearchifyX */ = {
 			isa = PBXGroup;
 			children = (
-				4214677828C2887F00E9D706 /* scraper.app */,
+				42C95D922900657A008936E3 /* scraper */,
 				4214674428C1C5EF00E9D706 /* SearchifyXApp.swift */,
 				4214674628C1C5EF00E9D706 /* ContentView.swift */,
 				4214674828C1C5F200E9D706 /* Assets.xcassets */,
@@ -140,8 +140,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				4214677928C2887F00E9D706 /* scraper.app in Resources */,
 				4214674928C1C5F200E9D706 /* Assets.xcassets in Resources */,
+				42C95D932900657A008936E3 /* scraper in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -289,7 +289,6 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_ASSET_PATHS = SearchifyX/scraper.app;
 				DEVELOPMENT_TEAM = R5T6626VHW;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
@@ -318,7 +317,6 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_ASSET_PATHS = SearchifyX/scraper.app;
 				DEVELOPMENT_TEAM = R5T6626VHW;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;

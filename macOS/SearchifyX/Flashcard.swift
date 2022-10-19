@@ -1,10 +1,3 @@
-//
-//  Flashcard.swift
-//  SearchifyX
-//
-//  Created by Jose Molina on 9/2/22.
-//
-
 import Foundation
 
 struct Flashcard: Identifiable, Codable {

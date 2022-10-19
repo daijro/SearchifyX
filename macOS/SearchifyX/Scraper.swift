@@ -1,19 +1,18 @@
-//
-//  Scraper.swift
-//  SearchifyX
-//
-//  Created by Jose Molina on 9/2/22.
-//
-
 import Foundation
 import AppKit
 import Vision
+import SwiftUI
+import UserNotifications
 
 class Scraper {
-    func search(query: String, sites: String, engine: String) -> [Flashcard] {
+    static func search(query: String, sites: String, engine: String) -> [Flashcard] {
+        if query.isEmpty {
+            return []
+        }
+        
         let proc = Process()
         proc.executableURL =
-            Bundle.main.bundleURL.appendingPathComponent("Contents/Resources/scraper.app/Contents/MacOS/scraper")
+            Bundle.main.bundleURL.appendingPathComponent("Contents/Resources/scraper/scraper")
         
         let tempDir = URL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true)
         let tempFile = ProcessInfo().globallyUniqueString
@@ -34,11 +33,23 @@ class Scraper {
         }
         catch {
             print("Error occurred trying to run the scraper: \(error)")
+            Scraper.alert(caption: "Unable to search", msg: "An error occurred while trying to scrape results")
             return []
         }
     }
     
-    func ocr() -> String {
+    static func ocr() -> String {
+        var window: NSWindow?
+        
+        if Variables.hiddenWindow != nil {
+            DispatchQueue.main.async {
+                if Variables.hiddenWindow!.isKeyWindow {
+                    window = NSApp.keyWindow
+                    window?.orderOut(nil)
+                }
+            }
+        }
+        
         let proc = Process()
         let exec = URL(fileURLWithPath: "/usr/sbin/screencapture")
         proc.executableURL = exec
@@ -47,6 +58,12 @@ class Scraper {
         do {
             try proc.run()
             proc.waitUntilExit()
+            
+            if Variables.hiddenWindow != nil {
+                DispatchQueue.main.async {
+                    window?.orderFront(nil)
+                }
+            }
             
             var data: Data?
             
@@ -69,7 +86,7 @@ class Scraper {
             }
             
             if recognizedStrings.isEmpty {
-                alert(caption: "Unable to run the OCR", msg: "No text was detected")
+                Scraper.alert(caption: "Unable to run the OCR", msg: "No text was detected")
                 return ""
             }
             
@@ -77,20 +94,37 @@ class Scraper {
         }
         catch {
             print("An error occurred trying to run the OCR: \(error)")
-            alert(caption: "Unable to run the OCR", msg: "An error occurred while trying to run or process the OCR")
+            Scraper.alert(caption: "Unable to run the OCR", msg: "An error occurred while trying to run or process the OCR")
             return ""
         }
     }
     
-    func alert(caption: String, msg: String) {
-        DispatchQueue.main.async {
-            let alert = NSAlert()
-            alert.messageText = caption
-            alert.informativeText = msg
-            alert.addButton(withTitle: "OK")
-            alert.alertStyle = .warning
-            alert.runModal()
+    static func alert(caption: String, msg: String) {
+        let content = UNMutableNotificationContent()
+        content.title = caption
+        content.body = msg
+        
+        let uuid = UUID().uuidString
+        let request = UNNotificationRequest(identifier: uuid, content: content, trigger: nil)
+        
+        let center = UNUserNotificationCenter.current()
+        center.requestAuthorization(options: [.alert, .sound]) { _, _ in}
+        center.add(request)
+    }
+    
+    static func getClipboard() -> String {
+        var clipboardItems: [String] = []
+        for element in NSPasteboard.general.pasteboardItems! {
+            if let str = element.string(forType: NSPasteboard.PasteboardType(rawValue: "public.utf8-plain-text")) {
+                clipboardItems.append(str)
+            }
         }
+        
+        if (clipboardItems.isEmpty) {
+            return ""
+        }
+        
+        return clipboardItems[0]
     }
     
     static func convertPercent(from input: String) -> Float {
@@ -99,5 +133,21 @@ class Scraper {
         } else {
             return 0
         }
+    }
+    
+    static func makeHiddenWindow(question: String?) {
+        if Variables.hiddenWindow != nil {
+            Variables.hiddenWindow?.isReleasedWhenClosed = true
+            Variables.hiddenWindow?.close()
+        }
+        
+        Variables.hiddenWindow = FloatingPanel(contentRect: NSRect(x: 0, y: 0, width: 900, height: 450), backing: .buffered, defer: false)
+        
+        Variables.hiddenWindow?.title = "Hidden SearchifyX"
+        Variables.hiddenWindow?.contentView = NSHostingView(rootView: ContentView(isPanel: true, question: question))
+        
+        Variables.hiddenWindow?.center()
+        Variables.hiddenWindow?.orderFront(nil)
+        Variables.hiddenWindow?.makeKey()
     }
 }
