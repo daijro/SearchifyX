@@ -71,15 +71,18 @@ class SearchEngine:
             'google': {
                 'domain': 'https://www.google.com/',
                 'query': 'q',
-                'args': {'aqs': 'chrome..69i57.888j0j1', 'sourceid': 'chrome', 'ie': 'UTF-8'}
+                'args': {'aqs': 'chrome..69i57.888j0j1', 'sourceid': 'chrome', 'ie': 'UTF-8'},
+                'limit': 2038
             },
             'bing': {
                 'domain': 'https://www.bing.com/',
                 'query': 'q',
-                'args': {'ghsh': '0', 'ghacc': '0', 'ghpl': ''}
+                'args': {'ghsh': '0', 'ghacc': '0', 'ghpl': ''},
+                'limit': 990
             },
             'startpage': {
                 'domain': 'https://www.startpage.com/',
+                'limit': 2038
             }
         }
         self.sess.headers.update({**headers, "Sec-Fetch-Site": "same-origin", 'Referer': self._web_engines[self.engine_name]['domain']})
@@ -119,14 +122,17 @@ class SearchEngine:
         self.t.join()
         if self.engine_name == 'startpage':
             return self.startpage_get_page(query, sites)
-        if self.engine_name == 'google':
+        elif self.engine_name == 'google':
             self.sess.headers['Referer'] = self._web_engines[self.engine_name]['domain'] = f'https://www.google.{choice(google_domains)}/'
         return dict(zip(
             sites,
             grequests.map([
                 grequests.get(
                     (web_engine := self._web_engines[self.engine_name])['domain'] + 'search?'
-                    + urlencode({web_engine['query']: f'{query} site:{site}.com', **web_engine['args']}),
+                    + urlencode({
+                        web_engine['query']: f"{query[:self._web_engines[self.engine_name]['limit']-len(site)]} site:{site}.com",
+                        **web_engine['args']
+                    }),
                     session=self.sess
                 )
                 for site in sites
