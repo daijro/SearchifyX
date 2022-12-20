@@ -8,6 +8,7 @@ from fake_headers import Headers
 import re
 import sys
 import time
+from random import choice
 from urllib.parse import urlencode
 from threading import Thread
 
@@ -27,6 +28,32 @@ headers = {
     "Connection": "close"
 }
 
+google_domains = (
+    'com', 'ad', 'ae', 'com.af', 'com.ag', 'com.ai', 'al', 'am',
+    'co.ao', 'com.ar', 'as', 'at', 'com.au', 'az', 'ba', 'com.bd',
+    'be', 'bf', 'bg', 'com.bh', 'bi', 'bj', 'com.bn', 'com.bo',
+    'com.br', 'bs', 'bt', 'co.bw', 'by', 'com.bz', 'ca', 'cd', 'cf',
+    'cg', 'ch', 'ci', 'co.ck', 'cl', 'cm', 'cn', 'com.co', 'co.cr',
+    'com.cu', 'cv', 'com.cy', 'cz', 'de', 'dj', 'dk', 'dm', 'com.do',
+    'dz', 'com.ec', 'ee', 'com.eg', 'es', 'com.et', 'fi', 'com.fj',
+    'fm', 'fr', 'ga', 'ge', 'gg', 'com.gh', 'com.gi', 'gl', 'gm',
+    'gr', 'com.gt', 'gy', 'com.hk', 'hn', 'hr', 'ht', 'hu', 'co.id',
+    'ie', 'co.il', 'im', 'co.in', 'iq', 'is', 'it', 'je', 'com.jm',
+    'jo', 'co.jp', 'co.ke', 'com.kh', 'ki', 'kg', 'co.kr', 'com.kw',
+    'kz', 'la', 'com.lb', 'li', 'lk', 'co.ls', 'lt', 'lu', 'lv',
+    'com.ly', 'co.ma', 'md', 'me', 'mg', 'mk', 'ml', 'com.mm', 'mn',
+    'ms', 'com.mt', 'mu', 'mv', 'mw', 'com.mx', 'com.my', 'co.mz',
+    'com.na', 'com.ng', 'com.ni', 'ne', 'nl', 'no', 'com.np', 'nr',
+    'nu', 'co.nz', 'com.om', 'com.pa', 'com.pe', 'com.pg', 'com.ph',
+    'com.pk', 'pl', 'pn', 'com.pr', 'ps', 'pt', 'com.py', 'com.qa',
+    'ro', 'ru', 'rw', 'com.sa', 'com.sb', 'sc', 'se', 'com.sg', 'sh',
+    'si', 'sk', 'com.sl', 'sn', 'so', 'sm', 'sr', 'st', 'com.sv',
+    'td', 'tg', 'co.th', 'com.tj', 'tl', 'tm', 'tn', 'to', 'com.tr', 
+    'tt', 'com.tw', 'co.tz', 'com.ua', 'co.ug', 'co.uk', 'com.uy',
+    'co.uz', 'com.vc', 'co.ve', 'vg', 'co.vi', 'com.vn', 'vu', 'ws',
+    'rs', 'co.za', 'co.zm', 'co.zw', 'cat'
+)
+
 get_text  = lambda x: BeautifulSoup(x, features='lxml').get_text().strip()
 sluggify  = lambda a: ' '.join(re.sub(r'[^\\sa-z0-9\\.,\\(\\)]+', ' ', a.lower()).split())
 similar   = lambda a, b: SequenceMatcher(None, sluggify(a), sluggify(b)).ratio()
@@ -37,39 +64,42 @@ def _make_headers():
 
 
 class SearchEngine:
-    headers = headers.copy()
     def __init__(self, engine_name):
         self.sess = HTMLSession()
         self.engine_name = engine_name
         self._web_engines = {   # simple scrapers using get requests
-            'google': ('https://www.google.com/search?', 'q', {'aqs': 'chrome..69i57.888j0j1', 'sourceid': 'chrome', 'ie': 'UTF-8'}),
-            'bing': ('https://www.bing.com/search?', 'q', {'pq': ''}),
+            'google': {
+                'domain': 'https://www.google.com/',
+                'query': 'q',
+                'args': {'aqs': 'chrome..69i57.888j0j1', 'sourceid': 'chrome', 'ie': 'UTF-8'}
+            },
+            'bing': {
+                'domain': 'https://www.bing.com/',
+                'query': 'q',
+                'args': {'ghsh': '0', 'ghacc': '0', 'ghpl': ''}
+            },
+            'startpage': {
+                'domain': 'https://www.startpage.com/',
+            }
         }
-        if engine_name in self._web_engines:
+        self.sess.headers.update({**headers, "Sec-Fetch-Site": "same-origin", 'Referer': self._web_engines[self.engine_name]['domain']})
+        print('Starting instance...')
+        self.t = Thread(target=self._init_search)
+        self.t.daemon = True
+        self.t.start()
+        
+    def _init_search(self):
+        if self.engine_name == 'google':
             return
-        elif engine_name == 'startpage':
-            print('Starting startpage instance...')
-            self.t = Thread(target=self._init_startpage)
-            self.t.daemon = True
-            self.t.start()
-        
-    def find_items(self, soup, args):
-        return {i: soup.find('input', {'type': 'hidden', 'name': i})['value'] for i in args}
+        r = self.sess.get(self._web_engines[self.engine_name]['domain'])
+        if self.engine_name == 'startpage':
+            self._startpage_data = self.get_startpage_items(r)
     
-    def get_startpage_items(self, r):
-        soup = BeautifulSoup(r.text, 'lxml')
-        return {'query': None, 'cat': 'web', **self.find_items(soup, ['lui', 'language', 'sc', 'abp'])}
-    
-    def _init_startpage(self):
-        self._startpage_data = self.get_startpage_items(self.sess.get('https://www.startpage.com/', headers=self.headers))
-        self.headers.update({"Sec-Fetch-Site": "same-origin", 'Referer': 'https://www.startpage.com/'})
-        
     def startpage_get_page(self, query, sites):
-        self.t.join()
         resps = grequests.map([
             grequests.post('https://www.startpage.com/sp/search',
-                headers=self.headers,
-                data={**self._startpage_data, **{'query': f'{query} site:{site}.com'}}
+                data={**self._startpage_data, **{'query': f'{query} site:{site}.com'}},
+                session=self.sess
             )
             for site in sites
         ])
@@ -78,21 +108,30 @@ class SearchEngine:
         self.t.start()
         return dict(zip(sites, resps))
         
+    def find_items(self, soup, args):
+        return {i: soup.find('input', {'type': 'hidden', 'name': i})['value'] for i in args}
+    
+    def get_startpage_items(self, r):
+        soup = BeautifulSoup(r.text, 'lxml')
+        return {'query': None, 'cat': 'web', **self.find_items(soup, ['lui', 'language', 'sc', 'abp'])}
+    
     def get_page(self, query, sites):
+        self.t.join()
         if self.engine_name == 'startpage':
             return self.startpage_get_page(query, sites)
+        if self.engine_name == 'google':
+            self.sess.headers['Referer'] = self._web_engines[self.engine_name]['domain'] = f'https://www.google.{choice(google_domains)}/'
         return dict(zip(
             sites,
             grequests.map([
                 grequests.get(
-                    (web_engine := self._web_engines[self.engine_name])[0]
-                    + urlencode({web_engine[1]: f'{query} site:{site}.com', **web_engine[2]}),
-                    headers=self.headers, session=self.sess
+                    (web_engine := self._web_engines[self.engine_name])['domain'] + 'search?'
+                    + urlencode({web_engine['query']: f'{query} site:{site}.com', **web_engine['args']}),
+                    session=self.sess
                 )
                 for site in sites
             ], size=len(sites))
         ))
-
 
 class SearchWeb:
     """
