@@ -1,7 +1,7 @@
 appdirs==1.4.4
 beautifulsoup4==4.10.0
 bs4==0.0.1
-certifi==2021.10.8
+certifi==2022.12.7
 cffi==1.15.0
 charset-normalizer==2.0.9
 colorama==0.4.4
@@ -15,10 +15,10 @@ html5lib==1.1
 idna==3.3
 importlib-metadata==4.11.3
 keyboard==0.13.5
-lxml==4.8.0
+lxml==4.9.1
 packaging==21.3
 parse==1.19.0
-Pillow==9.1.0
+Pillow==9.3.0
 pycparser==2.21
 pyee==8.2.2
 pyparsing==3.0.8
