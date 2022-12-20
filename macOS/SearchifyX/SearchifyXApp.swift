@@ -7,8 +7,9 @@ struct SearchifyXApp: App {
     
     var body: some Scene {
         WindowGroup {
-            ContentView(isPanel: false, question: nil)
+            ContentView(isPanel: false)
         }
+        .windowStyle(HiddenTitleBarWindowStyle())
         Settings {
             SettingsView()
         }
@@ -46,7 +47,7 @@ final class AppState: ObservableObject {
             return
         }
         
-        var card = Scraper.search(query: question!, sites: "quizlet,quizizz", engine: "google").first
+        let card = Scraper.search(query: question!, sites: "quizlet,quizizz", engine: "google").first
         if (card != nil) {
             Scraper.alert(caption: card!.question, msg: card!.answer)
         }

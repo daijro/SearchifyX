@@ -8,10 +8,18 @@
 
 /* Begin PBXBuildFile section */
 		4214674528C1C5EF00E9D706 /* SearchifyXApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4214674428C1C5EF00E9D706 /* SearchifyXApp.swift */; };
-		4214674728C1C5EF00E9D706 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4214674628C1C5EF00E9D706 /* ContentView.swift */; };
 		4214674928C1C5F200E9D706 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4214674828C1C5F200E9D706 /* Assets.xcassets */; };
 		4214677028C1CFB600E9D706 /* Flashcard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4214676F28C1CFB500E9D706 /* Flashcard.swift */; };
 		4214677528C1D99300E9D706 /* Scraper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4214677428C1D99300E9D706 /* Scraper.swift */; };
+		423A30E82926193900071A8A /* WebViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 423A30E72926193900071A8A /* WebViewModel.swift */; };
+		423A30EE29268E6100071A8A /* NotesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 423A30ED29268E6100071A8A /* NotesView.swift */; };
+		423A30F029268E7700071A8A /* BrowserView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 423A30EF29268E7700071A8A /* BrowserView.swift */; };
+		423A30F229268FB000071A8A /* ScraperView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 423A30F129268FB000071A8A /* ScraperView.swift */; };
+		423A30F429268FED00071A8A /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 423A30F329268FED00071A8A /* ContentView.swift */; };
+		423A30F62926A9C400071A8A /* ViewLoadExt.swift in Sources */ = {isa = PBXBuildFile; fileRef = 423A30F52926A9C400071A8A /* ViewLoadExt.swift */; };
+		423A30F92926B65100071A8A /* BrowserToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 423A30F82926B65100071A8A /* BrowserToolbar.swift */; };
+		423A30FB2926B70F00071A8A /* ScraperToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 423A30FA2926B70F00071A8A /* ScraperToolbar.swift */; };
+		423AC30D290116FA00319B15 /* NSWebView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 423AC30C290116FA00319B15 /* NSWebView.swift */; };
 		42C95D932900657A008936E3 /* scraper in Resources */ = {isa = PBXBuildFile; fileRef = 42C95D922900657A008936E3 /* scraper */; };
 		42E9576F28C80FA300BF7B3B /* FloatingPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42E9576E28C80FA300BF7B3B /* FloatingPanel.swift */; };
 		42E9579B28C84C0E00BF7B3B /* KeyboardShortcuts in Frameworks */ = {isa = PBXBuildFile; productRef = 42E9579A28C84C0E00BF7B3B /* KeyboardShortcuts */; };
@@ -22,10 +30,18 @@
 /* Begin PBXFileReference section */
 		4214674128C1C5EF00E9D706 /* SearchifyX.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SearchifyX.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		4214674428C1C5EF00E9D706 /* SearchifyXApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchifyXApp.swift; sourceTree = "<group>"; };
-		4214674628C1C5EF00E9D706 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		4214674828C1C5F200E9D706 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		4214676F28C1CFB500E9D706 /* Flashcard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Flashcard.swift; sourceTree = "<group>"; };
 		4214677428C1D99300E9D706 /* Scraper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Scraper.swift; sourceTree = "<group>"; };
+		423A30E72926193900071A8A /* WebViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebViewModel.swift; sourceTree = "<group>"; };
+		423A30ED29268E6100071A8A /* NotesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotesView.swift; sourceTree = "<group>"; };
+		423A30EF29268E7700071A8A /* BrowserView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserView.swift; sourceTree = "<group>"; };
+		423A30F129268FB000071A8A /* ScraperView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScraperView.swift; sourceTree = "<group>"; };
+		423A30F329268FED00071A8A /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		423A30F52926A9C400071A8A /* ViewLoadExt.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewLoadExt.swift; sourceTree = "<group>"; };
+		423A30F82926B65100071A8A /* BrowserToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserToolbar.swift; sourceTree = "<group>"; };
+		423A30FA2926B70F00071A8A /* ScraperToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScraperToolbar.swift; sourceTree = "<group>"; };
+		423AC30C290116FA00319B15 /* NSWebView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NSWebView.swift; sourceTree = "<group>"; };
 		42C95D922900657A008936E3 /* scraper */ = {isa = PBXFileReference; lastKnownFileType = folder; path = scraper; sourceTree = "<group>"; };
 		42E9576E28C80FA300BF7B3B /* FloatingPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloatingPanel.swift; sourceTree = "<group>"; };
 		42E9579C28C84C6900BF7B3B /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
@@ -63,17 +79,65 @@
 		4214674328C1C5EF00E9D706 /* SearchifyX */ = {
 			isa = PBXGroup;
 			children = (
+				423A30F72926B57F00071A8A /* Toolbars */,
+				423A30EC2926198300071A8A /* Helpers */,
+				423A30EB2926197000071A8A /* Models */,
+				423A30EA2926195700071A8A /* Views */,
+				423A30E92926193F00071A8A /* WebView */,
 				42C95D922900657A008936E3 /* scraper */,
 				4214674428C1C5EF00E9D706 /* SearchifyXApp.swift */,
-				4214674628C1C5EF00E9D706 /* ContentView.swift */,
 				4214674828C1C5F200E9D706 /* Assets.xcassets */,
-				4214676F28C1CFB500E9D706 /* Flashcard.swift */,
 				4214677428C1D99300E9D706 /* Scraper.swift */,
-				42E9576E28C80FA300BF7B3B /* FloatingPanel.swift */,
-				42E9579C28C84C6900BF7B3B /* SettingsView.swift */,
 				42E9579E28C84DAC00BF7B3B /* Constants.swift */,
+				423A30F329268FED00071A8A /* ContentView.swift */,
 			);
 			path = SearchifyX;
+			sourceTree = "<group>";
+		};
+		423A30E92926193F00071A8A /* WebView */ = {
+			isa = PBXGroup;
+			children = (
+				423A30E72926193900071A8A /* WebViewModel.swift */,
+				423AC30C290116FA00319B15 /* NSWebView.swift */,
+			);
+			path = WebView;
+			sourceTree = "<group>";
+		};
+		423A30EA2926195700071A8A /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				42E9579C28C84C6900BF7B3B /* SettingsView.swift */,
+				423A30ED29268E6100071A8A /* NotesView.swift */,
+				423A30EF29268E7700071A8A /* BrowserView.swift */,
+				423A30F129268FB000071A8A /* ScraperView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		423A30EB2926197000071A8A /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				4214676F28C1CFB500E9D706 /* Flashcard.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		423A30EC2926198300071A8A /* Helpers */ = {
+			isa = PBXGroup;
+			children = (
+				42E9576E28C80FA300BF7B3B /* FloatingPanel.swift */,
+				423A30F52926A9C400071A8A /* ViewLoadExt.swift */,
+			);
+			path = Helpers;
+			sourceTree = "<group>";
+		};
+		423A30F72926B57F00071A8A /* Toolbars */ = {
+			isa = PBXGroup;
+			children = (
+				423A30F82926B65100071A8A /* BrowserToolbar.swift */,
+				423A30FA2926B70F00071A8A /* ScraperToolbar.swift */,
+			);
+			path = Toolbars;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -153,11 +217,19 @@
 			buildActionMask = 2147483647;
 			files = (
 				4214677528C1D99300E9D706 /* Scraper.swift in Sources */,
+				423A30F62926A9C400071A8A /* ViewLoadExt.swift in Sources */,
+				423AC30D290116FA00319B15 /* NSWebView.swift in Sources */,
+				423A30EE29268E6100071A8A /* NotesView.swift in Sources */,
+				423A30F229268FB000071A8A /* ScraperView.swift in Sources */,
 				4214677028C1CFB600E9D706 /* Flashcard.swift in Sources */,
-				4214674728C1C5EF00E9D706 /* ContentView.swift in Sources */,
+				423A30F029268E7700071A8A /* BrowserView.swift in Sources */,
+				423A30E82926193900071A8A /* WebViewModel.swift in Sources */,
 				42E9579D28C84C6900BF7B3B /* SettingsView.swift in Sources */,
 				42E9579F28C84DAC00BF7B3B /* Constants.swift in Sources */,
+				423A30F429268FED00071A8A /* ContentView.swift in Sources */,
+				423A30FB2926B70F00071A8A /* ScraperToolbar.swift in Sources */,
 				4214674528C1C5EF00E9D706 /* SearchifyXApp.swift in Sources */,
+				423A30F92926B65100071A8A /* BrowserToolbar.swift in Sources */,
 				42E9576F28C80FA300BF7B3B /* FloatingPanel.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -299,7 +371,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 12.0;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.teamaurous.SearchifyX;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -327,7 +399,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 12.0;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.teamaurous.SearchifyX;
 				PRODUCT_NAME = "$(TARGET_NAME)";

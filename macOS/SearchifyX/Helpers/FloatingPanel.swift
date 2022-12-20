@@ -7,8 +7,8 @@ class FloatingPanel: NSPanel {
         self.isFloatingPanel = true
         self.level = .floating
         self.collectionBehavior.insert(.fullScreenAuxiliary)
-        self.titleVisibility = .visible
-        self.titlebarAppearsTransparent = false
+        self.titleVisibility = .hidden
+        self.titlebarAppearsTransparent = true
         self.isMovableByWindowBackground = true
         self.isReleasedWhenClosed = false
         

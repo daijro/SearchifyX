@@ -11,4 +11,6 @@ extension KeyboardShortcuts.Name {
 
 class Variables {
     static var hiddenWindow: NSWindow?
+    
+    static var wkModel = WebViewModel()
 }
