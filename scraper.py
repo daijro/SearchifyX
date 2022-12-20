@@ -101,7 +101,10 @@ class SearchEngine:
     def startpage_get_page(self, query, sites):
         resps = grequests.map([
             grequests.post('https://www.startpage.com/sp/search',
-                data={**self._startpage_data, **{'query': f'{query} site:{site}.com'}},
+                data={
+                    **self._startpage_data,
+                    'query': f"{query[:self._web_engines[self.engine_name]['limit']-len(site)]} site:{site}.com"
+                },
                 session=self.sess
             )
             for site in sites
@@ -120,6 +123,8 @@ class SearchEngine:
     
     def get_page(self, query, sites):
         self.t.join()
+        # escape query sequence
+        query = re.escape(query)
         if self.engine_name == 'startpage':
             return self.startpage_get_page(query, sites)
         elif self.engine_name == 'google':
