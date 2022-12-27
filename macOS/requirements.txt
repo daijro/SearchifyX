@@ -2,5 +2,5 @@ beautifulsoup4==4.11.1
 fake_headers==1.0.2
 grequests==0.6.0
 requests_html==0.10.0
-setuptools==63.2.0
+setuptools
 py2app==0.28.2
