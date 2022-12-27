@@ -1,3 +1,6 @@
+from tendo.singleton import SingleInstance
+me = SingleInstance()
+
 import ctypes
 import os
 import sys
@@ -66,38 +69,6 @@ class UI(QMainWindow):
         self.conf = self.loadjson() # get old config
         self.set_conf_keys()
 
-
-        '''
-        find the widgets in the xml file and set slots
-        '''
-
-        # title bar
-        self.transp_slider   = self.findChild(QtWidgets.QSlider,      "transparency_slider")
-        self.toggle_noactive = self.findChild(QtWidgets.QPushButton,  "toggle_noactive_style")
-        self.minimize_button = self.findChild(QtWidgets.QPushButton,  "minimize_button")
-        self.close_button    = self.findChild(QtWidgets.QPushButton,  "close_button")
-        self.copy_button     = self.findChild(QtWidgets.QPushButton,  "copy_button")
-        self.titleIcon       = self.findChild(QtWidgets.QLabel,       "titleIcon")
-        self.titleBar        = self.findChild(QtWidgets.QFrame,       "titleBar")
-
-        # search bar area
-        self.search_bar      = self.findChild(QtWidgets.QLineEdit,    "search_bar")
-        self.search_button   = self.findChild(QtWidgets.QPushButton,  "search_button")
-        self.ocr_button      = self.findChild(QtWidgets.QPushButton,  "ocr_button")
-        self.paste_button    = self.findChild(QtWidgets.QPushButton,  "paste_button")
-        self.search_frame    = self.findChild(QtWidgets.QFrame,       "search_frame")
-
-        # body
-        self.treeWidget      = self.findChild(QtWidgets.QTreeWidget,  "treeWidget")
-        self.stackedWidget   = self.findChild(QtWidgets.QStackedWidget, "stackedWidget")
-
-        # bottom row
-        self.copy_button     = self.findChild(QtWidgets.QPushButton,  "copy_button")
-        self.status_label    = self.findChild(QtWidgets.QLabel,       "status_label")
-        self.quizlet_button  = self.findChild(QtWidgets.QPushButton,  "quizlet_button")
-        self.quizizz_button  = self.findChild(QtWidgets.QPushButton,  "quizizz_button")
-        self.settings_button = self.findChild(QtWidgets.QPushButton,  "settings_button")
-
         self.quizlet_button.setChecked(self.conf['quizlet'])
         self.quizizz_button.setChecked(self.conf['quizizz'])
 
@@ -119,12 +90,6 @@ class UI(QMainWindow):
         # hotkeys
         self.hotkeys = KeyboardManager()
         self.window_shown = True
-
-        self.hide_show_key  = self.findChild(QtWidgets.QKeySequenceEdit, "hide_show_key")
-        self.ocr_key        = self.findChild(QtWidgets.QKeySequenceEdit, "ocr_key")
-        self.paste_key      = self.findChild(QtWidgets.QKeySequenceEdit, "paste_key")
-        self.win_transp_key = self.findChild(QtWidgets.QKeySequenceEdit, "win_transp_key")
-        self.win_trasp_value = self.findChild(QtWidgets.QSpinBox, "win_trasp_value")
 
         self.hide_show_key.setKeySequence(QtGui.QKeySequence.fromString(self.conf['hide_show_key']))
         self.ocr_key.setKeySequence(QtGui.QKeySequence.fromString(self.conf['ocr_key']))
@@ -150,21 +115,12 @@ class UI(QMainWindow):
         win_trasp_cmd()
 
         # clear hotkey
-        self.hide_show_key_clear  = self.findChild(QtWidgets.QPushButton, "hide_show_key_clear")
-        self.ocr_key_clear        = self.findChild(QtWidgets.QPushButton, "ocr_key_clear")
-        self.paste_key_clear      = self.findChild(QtWidgets.QPushButton, "paste_key_clear")
-        self.win_transp_key_clear = self.findChild(QtWidgets.QPushButton, "win_transp_key_clear")
-
         self.hide_show_key_clear.clicked.connect(lambda: [x() for x in [self.hide_show_key.clear, hide_show_cmd]])
         self.ocr_key_clear.clicked.connect(lambda: [x() for x in [self.ocr_key.clear, ocr_cmd]])
         self.paste_key_clear.clicked.connect(lambda: [x() for x in [self.paste_key.clear, paste_cmd]])
         self.win_transp_key_clear.clicked.connect(lambda: [x() for x in [self.win_transp_key.clear, win_trasp_cmd]])
 
         # checks
-        self.setting_search_ocr = self.findChild(QtWidgets.QCheckBox, "setting_search_ocr")
-        self.setting_search_paste = self.findChild(QtWidgets.QCheckBox, "setting_search_paste")
-        self.setting_hide_taskbar = self.findChild(QtWidgets.QCheckBox, "setting_hide_taskbar")
-
         self.setting_search_ocr.setChecked(self.conf['search_ocr'])
         self.setting_search_ocr.toggled.connect(lambda: self.updatejson('search_ocr'))
 
@@ -173,12 +129,6 @@ class UI(QMainWindow):
 
         self.setting_hide_taskbar.setChecked(self.conf['hide_taskbar'])
         self.setting_hide_taskbar.toggled.connect(lambda: self.set_hide_taskbar())
-
-        self.setting_save_focus = self.findChild(QtWidgets.QCheckBox, "setting_save_focus")
-        self.setting_save_transp = self.findChild(QtWidgets.QCheckBox, "setting_save_transp")
-        self.setting_save_pos = self.findChild(QtWidgets.QCheckBox, "setting_save_pos")
-        self.setting_rightclick_reset = self.findChild(QtWidgets.QCheckBox, "setting_rightclick_reset")
-        self.setting_on_top = self.findChild(QtWidgets.QCheckBox, "setting_on_top")
 
         if self.conf['save_focus'] != None:
             self.setting_save_focus.setChecked(True)
@@ -205,8 +155,6 @@ class UI(QMainWindow):
         self.search_engine_combo.currentIndexChanged.connect(lambda: self.run_search_engine())
 
         # window theme
-        self.themeInput = self.findChild(QtWidgets.QComboBox, "themeInput")
-        self.font_size = self.findChild(QtWidgets.QSpinBox, "font_size")
         
         self.themeInput.setCurrentIndex(self.conf['theme'])
         self.font_size.setValue(self.conf['font_size'])
@@ -215,8 +163,6 @@ class UI(QMainWindow):
         self.font_size.valueChanged.connect(self.set_window_theme)
 
         # exit settings
-        self.back_button = self.findChild(QtWidgets.QPushButton, "back_button")
-        self.back_label = self.findChild(QtWidgets.QLabel, "back_label")
 
         self.back_label.mousePressEvent = lambda x: self.stackedWidget.setCurrentIndex(0) if x.button() == Qt.LeftButton else None
         self.back_button.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(0))
@@ -275,7 +221,7 @@ class UI(QMainWindow):
         cursor = QtGui.QCursor.pos()
         
         area = GetMonitorInfo(MonitorFromPoint((cursor.x(), cursor.y())))
-        work    = area.get('Work')
+        work = area.get('Work')
         if not work:
             screen = QtWidgets.QApplication.screenAt(cursor).geometry() # get screen
             work = (screen.width(), screen.height())
@@ -373,7 +319,7 @@ class UI(QMainWindow):
     # data entry tools
     
     def run_ocr_tool(self, force_run_searcher=False):
-        if not os.path.exists(resource_path('tesseract-ocr')):
+        if not check_tesseract_paths():
             self.status_label.setText('Tesseract not found.')
             return
 

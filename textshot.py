@@ -32,7 +32,14 @@ def resource_path(relative_path):
         base_path = os.path.dirname(__file__)
     return os.path.join(base_path, relative_path)
 
-pytesseract.pytesseract.tesseract_cmd = resource_path(r"tesseract-ocr\tesseract.exe")
+
+def check_tesseract_paths():
+    for path in (resource_path(r"tesseract-ocr\tesseract.exe"), r'C:\Program Files\Tesseract-OCR\tesseract.exe'):
+        if os.path.exists(path):
+            return path
+
+
+pytesseract.pytesseract.tesseract_cmd = check_tesseract_paths()
 user32 = ctypes.windll.user32
 
 
