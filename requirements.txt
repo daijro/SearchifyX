@@ -17,6 +17,7 @@ importlib-metadata==5.2.0
 importlib-resources==5.10.1
 keyboard==0.13.5
 lxml==4.9.2
+mouse==0.7.1
 packaging==22.0
 parse==1.19.0
 Pillow==9.3.0
