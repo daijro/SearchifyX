@@ -169,7 +169,7 @@ class UI(QMainWindow):
         self.search_bar.focusInEvent = self.search_bar_focus_in
         self.search_bar.focusOutEvent = self.search_bar_focus_out
         self._modifiers = QtCore.Qt.KeyboardModifiers()
-        self._bar_thread_end = None
+        self._bar_thread = self._bar_thread_end = None
 
         # set connections
         self.search_bar.returnPressed.connect(self.run_searcher)
@@ -222,7 +222,6 @@ class UI(QMainWindow):
             self._bar_thread_end = Event()
             self._bar_thread = Thread(target=self.search_bar_listener, daemon=True)
             self._bar_thread.start()
-            Thread(target=self.listen_mouse_out, daemon=True).start()
         super(QtWidgets.QLineEdit, self.search_bar).focusInEvent(event)
     
     def search_bar_listener(self):
@@ -231,20 +230,16 @@ class UI(QMainWindow):
             QtWidgets.QApplication.postEvent(self.search_bar,
                 QtGui.QKeyEvent(QtGui.QKeyEvent.KeyPress, key, mod, text=''))
         # listen for keyboard events, and forward them to the search bar
-        hook = keyboard.hook(self.search_bar_keypress, suppress=True)
-        self._bar_thread_end.wait()
-        keyboard.unhook(hook)
-        
-    def listen_mouse_out(self):
-        # if mouse is out, deactivate cursor
         mouse_hook = mouse.on_click(
             lambda: None
             if self.geometry().contains(QtGui.QCursor.pos())
             else self.search_bar.clearFocus()
         )
+        hook = keyboard.hook(self.search_bar_keypress, suppress=True)
         self._bar_thread_end.wait()
+        keyboard.unhook(hook)
         mouse.unhook(mouse_hook)
-
+        
     scan_code_map = {
         75: QtCore.Qt.Key_Left,
         77: QtCore.Qt.Key_Right,
@@ -270,12 +265,18 @@ class UI(QMainWindow):
             else:
                 self._modifiers = self._modifiers & ~self.modifier_map[key.scan_code]
             return
+        # exempt select keys
         if key.scan_code in self.key_exceptions:
             if key.event_type == 'down':
                 keyboard.press(key.scan_code)
             else:
                 keyboard.release(key.scan_code)
             return
+        # exit on meta key
+        elif key.scan_code == 91:
+            self.search_bar.clearFocus()
+            return
+            
         scan_code = self.scan_code_map.get(key.scan_code, key.scan_code)
         keypress = QtGui.QKeyEvent(
             {'up': QtGui.QKeyEvent.KeyRelease, 'down': QtGui.QKeyEvent.KeyPress}[key.event_type],
@@ -287,11 +288,11 @@ class UI(QMainWindow):
         # send the keypress to the search bar
         QtWidgets.QApplication.postEvent(self.search_bar, keypress)
         
-
     def search_bar_focus_out(self, event):
         # kill thread
-        self._bar_thread_end.set()
-        self._bar_thread.join()
+        if self._bar_thread and self._bar_thread.is_alive():
+            self._bar_thread_end.set()
+            self._bar_thread.join()
         super(QtWidgets.QLineEdit, self.search_bar).focusOutEvent(event)
     
     # setting window attributes
@@ -321,7 +322,6 @@ class UI(QMainWindow):
         # icon sizes
         for obj in [self.quizizz_button, self.quizlet_button]:
             obj.setIconSize(QtCore.QSize(font_size*2, font_size*2))
-
 
         if theme == 2 or (DARK_MODE and not theme): # dark
             app.setPalette(dark_palette)
