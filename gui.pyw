@@ -6,9 +6,10 @@ import os
 import sys
 import time
 from ctypes.wintypes import MSG
-from threading import Thread
+from threading import Thread, Event
 import json
 import keyboard
+import mouse
 import win32api
 import win32con
 from pyperclip import paste
@@ -84,7 +85,6 @@ class UI(QMainWindow):
         self.quizlet_button.setIcon(QtGui.QIcon(resource_path("img\\quizlet.png")))
         self.titleIcon.setPixmap(QtGui.QPixmap(resource_path("img\\search.png")))
 
-
         # SETTINGS PAGE
 
         # hotkeys
@@ -155,7 +155,6 @@ class UI(QMainWindow):
         self.search_engine_combo.currentIndexChanged.connect(lambda: self.run_search_engine())
 
         # window theme
-        
         self.themeInput.setCurrentIndex(self.conf['theme'])
         self.font_size.setValue(self.conf['font_size'])
         
@@ -163,10 +162,14 @@ class UI(QMainWindow):
         self.font_size.valueChanged.connect(self.set_window_theme)
 
         # exit settings
-
         self.back_label.mousePressEvent = lambda x: self.stackedWidget.setCurrentIndex(0) if x.button() == Qt.LeftButton else None
         self.back_button.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(0))
 
+        # search bar events
+        self.search_bar.focusInEvent = self.search_bar_focus_in
+        self.search_bar.focusOutEvent = self.search_bar_focus_out
+        self._modifiers = QtCore.Qt.KeyboardModifiers()
+        self._bar_thread_end = None
 
         # set connections
         self.search_bar.returnPressed.connect(self.run_searcher)
@@ -177,7 +180,6 @@ class UI(QMainWindow):
         self.ocr_button.clicked.connect(self.run_ocr_tool)
         self.paste_button.clicked.connect(self.paste_text)
         self.search_button.clicked.connect(self.run_searcher)
-
 
         # set column width
         self.treeWidget.setColumnWidth(1, 250)
@@ -211,6 +213,80 @@ class UI(QMainWindow):
 
         # show ui
         self.show()
+    
+    # search bar keyboard listener
+    
+    def search_bar_focus_in(self, event):
+        # create thread to listen for keyboard events
+        if self.toggle_noactive.isChecked():
+            self._bar_thread_end = Event()
+            self._bar_thread = Thread(target=self.search_bar_listener, daemon=True)
+            self._bar_thread.start()
+            Thread(target=self.listen_mouse_out, daemon=True).start()
+        super(QtWidgets.QLineEdit, self.search_bar).focusInEvent(event)
+    
+    def search_bar_listener(self):
+        # hacky method to activate cursor
+        for key, mod in ((QtCore.Qt.Key_Left, QtCore.Qt.ShiftModifier), (QtCore.Qt.Key_Right, QtCore.Qt.NoModifier)):
+            QtWidgets.QApplication.postEvent(self.search_bar,
+                QtGui.QKeyEvent(QtGui.QKeyEvent.KeyPress, key, mod, text=''))
+        # listen for keyboard events, and forward them to the search bar
+        hook = keyboard.hook(self.search_bar_keypress, suppress=True)
+        self._bar_thread_end.wait()
+        keyboard.unhook(hook)
+        
+    def listen_mouse_out(self):
+        # if mouse is out, deactivate cursor
+        mouse_hook = mouse.on_click(
+            lambda: None
+            if self.geometry().contains(QtGui.QCursor.pos())
+            else self.search_bar.clearFocus()
+        )
+        self._bar_thread_end.wait()
+        mouse.unhook(mouse_hook)
+
+    scan_code_map = {
+        75: QtCore.Qt.Key_Left,
+        77: QtCore.Qt.Key_Right,
+        14: QtCore.Qt.Key_Backspace,
+        57: QtCore.Qt.Key_Space,
+        71: QtCore.Qt.Key_Home,
+        79: QtCore.Qt.Key_End,
+        83: QtCore.Qt.Key_Delete,
+        28: QtCore.Qt.Key_Return,
+    }
+    modifier_map = {
+        29: QtCore.Qt.ControlModifier,
+        42: QtCore.Qt.ShiftModifier,
+        56: QtCore.Qt.AltModifier,
+    }
+
+    def search_bar_keypress(self, key: keyboard.KeyboardEvent):
+        # send the keypress to the self.search_bar
+        if key.scan_code in self.modifier_map:
+            if key.event_type == 'down':
+                self._modifiers = self._modifiers | self.modifier_map[key.scan_code]
+            else:
+                self._modifiers = self._modifiers & ~self.modifier_map[key.scan_code]
+            return
+            
+        scan_code = self.scan_code_map.get(key.scan_code, key.scan_code)
+        keypress = QtGui.QKeyEvent(
+            {'up': QtGui.QKeyEvent.KeyRelease, 'down': QtGui.QKeyEvent.KeyPress}[key.event_type],
+            scan_code,
+            self._modifiers,
+            text=key.name if len(key.name) == 1 else ' ' if key.name == 'space' else '',
+        )
+        # print(keypress.key(), key.scan_code, key.event_type, key.is_keypad, self._modifiers)
+        # send the keypress to the search bar
+        QtWidgets.QApplication.postEvent(self.search_bar, keypress)
+        
+
+    def search_bar_focus_out(self, event):
+        # kill thread
+        self._bar_thread_end.set()
+        self._bar_thread.join()
+        super(QtWidgets.QLineEdit, self.search_bar).focusOutEvent(event)
     
     # setting window attributes
     
@@ -437,7 +513,8 @@ class UI(QMainWindow):
         else:
             self.remove_noactive_style() 
         # set placeholder text om lineEdit
-        self.search_bar.setPlaceholderText('Window focus safety lock on' if x else 'Type a question here')
+        self.search_bar.setPlaceholderText('Type a question here (Window focus safety ON)' if x else 'Type a question here')
+        self._bar_thread_end and self._bar_thread_end.set()  # end safety lock typing thread
         # hide minimize button
         self.minimize_button.setVisible(not (x or self.setting_hide_taskbar.isChecked()))
         self.updatejson('save_focus')
@@ -564,9 +641,6 @@ dark_palette.setColor(QtGui.QPalette.HighlightedText, QtCore.Qt.black)
 
 dark_titleBar_palette   = QtGui.QPalette()
 dark_titleBar_palette.setColor(QtGui.QPalette.Window, (QtGui.QColor(28, 38, 48)))
-
-
-
 
 
 MainWindow = QtWidgets.QMainWindow()
