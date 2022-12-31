@@ -276,6 +276,13 @@ class UI(QMainWindow):
         elif key.scan_code == 91:
             self.search_bar.clearFocus()
             return
+        # ignore None events
+        elif not key.name:
+            return
+        # handle ctrl+a
+        elif key.scan_code == 30 and self._modifiers & QtCore.Qt.ControlModifier:
+            self.search_bar.selectAll()
+            return
             
         scan_code = self.scan_code_map.get(key.scan_code, key.scan_code)
         keypress = QtGui.QKeyEvent(
