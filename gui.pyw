@@ -260,7 +260,8 @@ class UI(QMainWindow):
         42: QtCore.Qt.ShiftModifier,
         56: QtCore.Qt.AltModifier,
     }
-
+    key_exceptions = {58, 69}
+    
     def search_bar_keypress(self, key: keyboard.KeyboardEvent):
         # send the keypress to the self.search_bar
         if key.scan_code in self.modifier_map:
@@ -269,7 +270,12 @@ class UI(QMainWindow):
             else:
                 self._modifiers = self._modifiers & ~self.modifier_map[key.scan_code]
             return
-            
+        if key.scan_code in self.key_exceptions:
+            if key.event_type == 'down':
+                keyboard.press(key.scan_code)
+            else:
+                keyboard.release(key.scan_code)
+            return
         scan_code = self.scan_code_map.get(key.scan_code, key.scan_code)
         keypress = QtGui.QKeyEvent(
             {'up': QtGui.QKeyEvent.KeyRelease, 'down': QtGui.QKeyEvent.KeyPress}[key.event_type],
