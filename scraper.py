@@ -63,38 +63,49 @@ def _make_headers():
     return {**headers, **Headers(headers=True, browser='chrome', os='windows').generate()}
 
 
+_web_engines = {
+    'google': {
+        'domain': 'https://www.google.com/',
+        'query': 'q',
+        'args': {'aqs': 'chrome..69i57.888j0j1', 'sourceid': 'chrome', 'ie': 'UTF-8'},
+        'limit': 2038,
+        'start_sess': False,
+    },
+    'bing': {
+        'domain': 'https://www.bing.com/',
+        'query': 'q',
+        'args': {'ghsh': '0', 'ghacc': '0', 'ghpl': ''},
+        'limit': 990,
+        'start_sess': True,
+    },
+    'startpage': {
+        'domain': 'https://www.startpage.com/',
+        'limit': 2038,
+        'start_sess': True,
+    },
+    'duckduckgo': {
+        'domain': 'https://ddg-webapp-aagd.vercel.app/',
+        'query': 'q',
+        'args': {'max_results': '10'},
+        'limit': 490,
+        'start_sess': False,
+    }
+}
+
 class SearchEngine:
     def __init__(self, engine_name):
         self.sess = HTMLSession()
         self.engine_name = engine_name
-        self._web_engines = {   # simple scrapers using get requests
-            'google': {
-                'domain': 'https://www.google.com/',
-                'query': 'q',
-                'args': {'aqs': 'chrome..69i57.888j0j1', 'sourceid': 'chrome', 'ie': 'UTF-8'},
-                'limit': 2038
-            },
-            'bing': {
-                'domain': 'https://www.bing.com/',
-                'query': 'q',
-                'args': {'ghsh': '0', 'ghacc': '0', 'ghpl': ''},
-                'limit': 990
-            },
-            'startpage': {
-                'domain': 'https://www.startpage.com/',
-                'limit': 2038
-            }
-        }
-        self.sess.headers.update({**headers, "Sec-Fetch-Site": "same-origin", 'Referer': self._web_engines[self.engine_name]['domain']})
+        self.sess.headers.update({**headers, "Sec-Fetch-Site": "same-origin", 'Referer': _web_engines[self.engine_name]['domain']})
         print('Starting instance...')
         self.t = Thread(target=self._init_search)
         self.t.daemon = True
         self.t.start()
         
     def _init_search(self):
-        if self.engine_name == 'google':
+        if not _web_engines[self.engine_name]['start_sess']:
             return
-        r = self.sess.get(self._web_engines[self.engine_name]['domain'])
+        r = self.sess.get(_web_engines[self.engine_name]['domain'])
         if self.engine_name == 'startpage':
             self._startpage_data = self.get_startpage_items(r)
     
@@ -103,7 +114,7 @@ class SearchEngine:
             grequests.post('https://www.startpage.com/sp/search',
                 data={
                     **self._startpage_data,
-                    'query': f"{query[:self._web_engines[self.engine_name]['limit']-len(site)]} site:{site}.com"
+                    'query': f"{query[:_web_engines[self.engine_name]['limit']-len(site)]} site:{site}.com"
                 },
                 session=self.sess
             )
@@ -128,14 +139,14 @@ class SearchEngine:
         if self.engine_name == 'startpage':
             return self.startpage_get_page(query, sites)
         elif self.engine_name == 'google':
-            self.sess.headers['Referer'] = self._web_engines[self.engine_name]['domain'] = f'https://www.google.{choice(google_domains)}/'
+            self.sess.headers['Referer'] = _web_engines[self.engine_name]['domain'] = f'https://www.google.{choice(google_domains)}/'
         return dict(zip(
             sites,
             grequests.map([
                 grequests.get(
-                    (web_engine := self._web_engines[self.engine_name])['domain'] + 'search?'
+                    (web_engine := _web_engines[self.engine_name])['domain'] + 'search?'
                     + urlencode({
-                        web_engine['query']: f"{query[:self._web_engines[self.engine_name]['limit']-len(site)]} site:{site}.com",
+                        web_engine['query']: f"{query[:_web_engines[self.engine_name]['limit']-len(site)]} site:{site}.com",
                         **web_engine['args']
                     }),
                     session=self.sess
@@ -378,7 +389,7 @@ if __name__ == '__main__' and len(sys.argv) > 1:
     parser.add_argument('--query',  '-q', help='query to search for',  default=None)
     parser.add_argument('--output', '-o', help='output file',          default=None)
     parser.add_argument('--sites',  '-s', help='question sources quizlet,quizizz (comma seperated list)', default='quizlet,quizizz')
-    parser.add_argument('--engine', '-e', help='search engine to use (google, bing)', default='bing')
+    parser.add_argument('--engine', '-e', help='search engine to use', default='bing', choices=_web_engines.keys())
     args = parser.parse_args()
 
     if args.output:

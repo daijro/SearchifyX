@@ -793,6 +793,11 @@
                    </item>
                    <item>
                     <property name="text">
+                     <string>DuckDuckGo</string>
+                    </property>
+                   </item>
+                   <item>
+                    <property name="text">
                      <string>Google</string>
                     </property>
                    </item>
