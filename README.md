@@ -29,7 +29,7 @@ Install the [Python 3.8](https://www.python.org/downloads/release/python-389/) d
 python -m pip install -r requirements.txt
 ```
 
-You also need to download [tesseract-ocr](https://www.dropbox.com/s/abuo044ayx4vlex/tesseract-ocr.7z?dl=1) and extract it to the root directory to use the OCR tool.
+You also need to [install](https://www.dropbox.com/s/abuo044ayx4vlex/tesseract-ocr.7z?dl=1) Tesseract to use the OCR tool, or *download and extract* the [portable archive](https://www.dropbox.com/s/abuo044ayx4vlex/tesseract-ocr.7z?dl=1) to the root directory.
 
 <hr width=30>
 
@@ -39,7 +39,7 @@ An alternative for Linux/Mac OS users is to use [`scraper.py`](https://github.co
 
 Usage:
 ```
-scraper.py [-h] [--query QUERY] [--output OUTPUT] [--sites SITES]
+scraper.py [-h] [--query QUERY] [--output OUTPUT] [--sites SITES] [--engine {google,bing,startpage,duckduckgo}]
 ```
 
 Required arguments:
@@ -57,7 +57,9 @@ Optional arguments:
 --output OUTPUT, -o OUTPUT
                       output file (optional)
 --sites SITES, -s SITES
-                      question sources quizlet,quizizz,brainly (comma seperated list)
+                      question sources quizlet,quizizz (comma seperated list)
+--engine ENGINE, -e ENGINE
+                      search engine to use
 ```
 
 ---
@@ -65,7 +67,7 @@ Optional arguments:
 
 ## What it does
 
--   Searches Bing for Quizlet, Quizizz, and Brainly results
+-   Searches online for Quizlet and Quizizz results
 
 -   Sort results by how similar the identified question is to the input question
 
@@ -96,7 +98,6 @@ Optional arguments:
 
 Many websites can detect when the window focus is lost. SearchifyX includes a __window switching safety lock__ to prevent websites from knowing you are using a different window.
 
-*Note: The text search bar does not work when the Window switch safety lock is enabled. It is designed to be used with the OCR tool and Paste & Search tool.*
 
 Here is a [demo website](https://www.codingwithjesse.com/demo/2007-05-16-detect-browser-window-focus/) that turns black when the window is out of focus:
 
@@ -114,9 +115,9 @@ Here is a [demo website](https://www.codingwithjesse.com/demo/2007-05-16-detect-
 
 - Added global hotkeys
 
-- MAJOR changes to UI
+- *Major* changes to UI
 
-- MAJOR changes web scraper code (averages 1-2 seconds now; uses significantly less CPU)
+- *Major* changes web scraper code (averages 1-2 seconds now; uses significantly less CPU)
 
 - Completely fixed the "Too many requests" error
 
