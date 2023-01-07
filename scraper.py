@@ -247,7 +247,7 @@ class QuizletScraper:
         self.resps = None
         self.quizlets = []
         self.query = query
-        self._regex_obj = re.compile('\\= \\{"alphabeticalIsDifferent.*\\}; QLoad\\(')
+        self._regex_obj = re.compile('\\= (\\{"alphabeticalIsDifferent.*\\}); QLoad\\(')
 
     def async_requests(self, links):
         reqs = [grequests.get(u, headers=_make_headers()) for u in links]
@@ -265,7 +265,7 @@ class QuizletScraper:
 
 
     def quizlet_parser(self, resp):
-        data = json.loads(re.findall(self._regex_obj, resp.text)[0][2:-8]) # get quizlet headerData
+        data = json.loads(re.search(self._regex_obj, resp.text)[1]) # get quizlet headerData
         return max(
             (
                 {
