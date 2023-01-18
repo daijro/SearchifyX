@@ -25,7 +25,7 @@ struct BrowserToolbar: View {
             })
             .buttonStyle(.borderless)
             TextField("Enter URL", text: url)
-                .frame(minWidth: 400)
+                .frame(minWidth: 400, maxWidth: 400)
                 .textFieldStyle(.roundedBorder)
             Button(action: {
                 Variables.wkModel.loadUrl()

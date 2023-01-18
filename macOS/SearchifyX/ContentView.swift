@@ -11,37 +11,43 @@ struct ContentView: View {
     var isPanel: Bool
     var question: String?
     
-    var body: some View {
+    @State var selection: Int?
+    @EnvironmentObject var wkvm: WebViewModel
+    
+    var body: some View { 
         NavigationView() {
             List() {
-                NavigationLink(destination: ScraperView(isPanel: isPanel, question: question)) {
+                NavigationLink(destination: ScraperView(isPanel: isPanel, question: question), tag: 0, selection: $selection) {
                     HStack {
                         Image(systemName: "magnifyingglass")
                         Text("Search")
                     }
                 }
                 .navigationTitle("Search")
-                NavigationLink(destination: BrowserView(isPanel: isPanel)) {
+                NavigationLink(destination: BrowserView(isPanel: isPanel).environmentObject(wkvm), tag: 1, selection: $selection) {
                     HStack {
                         Image(systemName: "globe.americas")
                         Text("Browser")
                     }
                 }
                 .navigationTitle("Browser")
-                NavigationLink(destination: NotesView()) {
+                NavigationLink(destination: NotesView(), tag: 2, selection: $selection) {
                     HStack {
                         Image(systemName: "note.text")
                         Text("Notes")
                     }
                 }
                 .navigationTitle("Notes")
-                NavigationLink(destination: SettingsView()) {
+                NavigationLink(destination: SettingsView(), tag: 3, selection: $selection) {
                     HStack {
                         Image(systemName: "gear")
                         Text("Settings")
                     }
                 }
                 .navigationTitle("Settings")
+            }
+            .onAppear() {
+                self.selection = 0
             }
             .toolbar {
                 ToolbarItemGroup(placement: .navigation) {

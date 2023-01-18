@@ -8,18 +8,14 @@
 import SwiftUI
 
 struct BrowserView: View {
-    var urlStr: Binding<String> { Binding(
-        get: { return Variables.wkModel.urlString }, set: {str in
-            Variables.wkModel.urlString = str
-        }
-    )}
-    
     var isPanel: Bool
+    
+    @EnvironmentObject var wkvm: WebViewModel
     
     var body: some View {
         VStack {
             if (isPanel) {
-                BrowserToolbar(url: urlStr)
+                BrowserToolbar(url: $wkvm.urlString)
                     .padding(.leading)
                     .padding(.trailing)
             }
@@ -28,7 +24,7 @@ struct BrowserView: View {
         }
         .toolbar {
             ToolbarItemGroup(placement: .principal) {
-                BrowserToolbar(url: urlStr)
+                BrowserToolbar(url: $wkvm.urlString)
             }
         }
         .onLoad {

@@ -4,7 +4,8 @@
 pip3 install -r requirements.txt
 
 # Generate app
-pyinstaller ../scraper.py
+mkdir ./SearchifyX/scraper
+python3 -m PyInstaller --noconfirm ../scraper.py
 
 # Delete old scraper.app
 rm -r ./SearchifyX/scraper

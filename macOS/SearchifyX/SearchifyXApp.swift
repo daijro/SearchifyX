@@ -8,6 +8,7 @@ struct SearchifyXApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView(isPanel: false)
+                .environmentObject(Variables.wkModel)
         }
         .windowStyle(HiddenTitleBarWindowStyle())
         Settings {
