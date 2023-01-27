@@ -17,6 +17,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets, uic
 from PyQt5.QtCore import QObject, Qt, pyqtSignal
 from PyQt5.QtWidgets import QApplication, QMainWindow
 from win32api import GetMonitorInfo, MonitorFromPoint
+import darkdetect
 
 from tkinter import messagebox
 import tkinter as tk
@@ -602,36 +603,13 @@ class UI(QMainWindow):
             return json.load(f)
 
 
-def detect_darkmode_in_windows() -> bool: # automatically detect dark mode
-    try:
-        import winreg
-    except ImportError:
-        return False
-    registry = winreg.ConnectRegistry(None, winreg.HKEY_CURRENT_USER)
-    reg_keypath = r'SOFTWARE\Microsoft\Windows\CurrentVersion\Themes\Personalize'
-    try:
-        reg_key = winreg.OpenKey(registry, reg_keypath)
-    except FileNotFoundError:
-        return False
-
-    for i in range(1024):
-        try:
-            value_name, value, _ = winreg.EnumValue(reg_key, i)
-            if value_name == 'AppsUseLightTheme':
-                return value == 0
-        except OSError:
-            break
-    return False
-
-
-
 # initialize app
 QtCore.QCoreApplication.setAttribute(Qt.AA_DisableHighDpiScaling)
 app = QApplication(sys.argv)
 QtGui.QFontDatabase.addApplicationFont(resource_path('fonts\\Poppins Medium.ttf'))
 
 # color palettes
-DARK_MODE = detect_darkmode_in_windows()
+DARK_MODE = darkdetect.isDark()
 
 light_palette           = QtGui.QPalette()
 

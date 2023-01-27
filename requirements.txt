@@ -6,6 +6,7 @@ cffi==1.15.1
 charset-normalizer==2.1.1
 colorama==0.4.6
 cssselect==1.2.0
+darkdetect==0.5.1
 fake-headers==1.0.2
 fake-useragent==1.1.1
 gevent==22.10.2
