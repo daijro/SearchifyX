@@ -55,7 +55,7 @@ google_domains = (
 )
 
 get_text  = lambda x: BeautifulSoup(x, features='lxml').get_text().strip()
-sluggify  = lambda a: ' '.join(re.sub(r'[^\\sa-z0-9\\.,\\(\\)]+', ' ', a.lower()).split())
+sluggify  = lambda a: ' '.join(a.lower().split())
 similar   = lambda a, b: SequenceMatcher(None, sluggify(a), sluggify(b)).ratio()
 remove_duplicates = lambda a: list(set(a))
 
