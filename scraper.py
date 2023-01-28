@@ -11,6 +11,10 @@ import time
 from random import choice
 from urllib.parse import urlencode
 from threading import Thread
+from merlin import MerlinScraper
+import logging
+
+logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(levelname)s: %(message)s', datefmt='%H:%M:%S')
 
 headers = {
     "Sec-Ch-Ua": "\"(Not(A:Brand\";v=\"8\", \"Chromium\";v=\"99\"",
@@ -97,7 +101,7 @@ class SearchEngine:
         self.sess = HTMLSession()
         self.engine_name = engine_name
         self.sess.headers.update({**headers, "Sec-Fetch-Site": "same-origin", 'Referer': _web_engines[self.engine_name]['domain']})
-        print('Starting instance...')
+        logging.info('Starting instance...')
         self.t = Thread(target=self._init_search)
         self.t.daemon = True
         self.t.start()
@@ -165,7 +169,7 @@ class SearchWeb:
         self.sites = sites
         self.engine = engine
         self._regex_objs = {
-            'quizlet': re.compile('https?://quizlet.com/\d+/[a-z0-9\\-]+/'),
+            'quizlet': re.compile('https?://quizlet.com/\d+/[a-z\d\\-]+/'),
             'quizizz': re.compile('https?://quizizz.com/admin/quiz/[a-f0-9]+/[a-z\\-]+'),
         }
 
@@ -198,7 +202,7 @@ class QuizizzScraper:
             try:
                 self.quizizzs.append(self.quizizz_parser(resp))
             except Exception as e:
-                print('exception', e, resp.url)
+                logging.info(f'Quizizz exception: {e} {resp.url}')
         return self.quizizzs
 
 
@@ -247,7 +251,7 @@ class QuizletScraper:
         self.resps = None
         self.quizlets = []
         self.query = query
-        self._regex_obj = re.compile('\\= (\\{"alphabeticalIsDifferent.*\\}); QLoad\\(')
+        self._regex_obj = re.compile(r'(\\?)"termIdToTermsMap\\?":({.*}),\\?"termSort\\?"')
 
     def async_requests(self, links):
         reqs = [grequests.get(u, headers=_make_headers()) for u in links]
@@ -259,13 +263,16 @@ class QuizletScraper:
             try:
                 self.quizlets.append(self.quizlet_parser(resp))
             except Exception as e:
-                print('exception', e, resp.url)
-                # pass # skip over any errors
+                logging.info(f'Quizlet exception: {e} {resp.url}')
         return self.quizlets
 
 
     def quizlet_parser(self, resp):
-        data = json.loads(re.search(self._regex_obj, resp.text)[1]) # get quizlet headerData
+        terms_match = re.search(self._regex_obj, resp.text)
+        if terms_match[1]:  # needs to be unescaped
+            data = json.loads(terms_match[2].encode('utf-8').decode('unicode_escape'))
+        else:
+            data = json.loads(terms_match[2])
         return max(
             (
                 {
@@ -278,7 +285,7 @@ class QuizletScraper:
                     ),
                     'url': resp.url,
                 }
-                for i in data['termIdToTermsMap'].values()
+                for i in data.values()
             ),
             key=lambda x: x['similarity'],
         )
@@ -351,7 +358,7 @@ class Searchify:
 
         for n, T in enumerate(threads):
             T.join()
-            print(f'Thread {n} finished')
+            logging.info(f'Thread {n} finished')
 
         self.sort_flashcards()
         self.stop_time = time.time() - self.timer.elapsed_total
@@ -390,6 +397,7 @@ if __name__ == '__main__' and len(sys.argv) > 1:
     parser.add_argument('--output', '-o', help='output file',          default=None)
     parser.add_argument('--sites',  '-s', help='question sources quizlet,quizizz (comma seperated list)', default='quizlet,quizizz')
     parser.add_argument('--engine', '-e', help='search engine to use', default='bing', choices=_web_engines.keys())
+    parser.add_argument('--chatgpt', '-gpt', help='summarize the results in ChatGPT (expiremental)', action='store_true')
     args = parser.parse_args()
 
     if args.output:
@@ -423,3 +431,30 @@ if __name__ == '__main__' and len(sys.argv) > 1:
     print(f'{len(s.flashcards)} flashcards found')
 
     s.timer.print_timers()
+    
+    # get best answer with chatgpt
+    if args.chatgpt:
+        print('\n--------------------\nCHATGPT SUMMARIZATION:')
+        chatgpt = MerlinScraper()
+        print('') # newline
+        chatgpt.prompt(f"""
+Instuctions: You are now FlashcardGPT. A student queries a quiz question into the web search. Using the provided data from FlashcardSearch, which flashcard most likely answers to the student's query? Return the most frequent and similar answer.
+
+Start with "Best Answer:", and explain the question and how the answer is correct. Example:
+Best Answer: X
+Explanation: ...
+
+Query: "{args.query}"
+
+Data collected from FlashcardSearch, a web scraper that searches the internet for flashcards:
+{
+    json.dumps([
+        {
+            'question': card['question'],
+            'answer': card['answer'],
+            'similarity': card['similarity'],
+        }
+        for card in s.flashcards
+    ], indent=4)
+}
+""")
