@@ -27,6 +27,7 @@ class MerlinScraper:
         'sec-fetch-site': 'cross-site',
         'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36',
     }
+    _re_text = re.compile(r'"text": "[^"]*?[^\\]"')
     
     def __init__(self):
         self.setAccount()
@@ -54,7 +55,7 @@ class MerlinScraper:
         payload = {"segmentation": "OPENAI_CHATGPT_VERSION", "userid": userid}
         r = requests.post(url, headers=acc_headers, json=payload)
         if r.status_code != 200:
-            logging.critical('Error making account.')
+            logging.critical('Error making account')
             raise Exception(r.text)
         else:
             logging.info(f'Account created: {userid}')
@@ -76,26 +77,23 @@ class MerlinScraper:
         )
         all_text = ''
         for chunk in r.iter_content(chunk_size=1024):
-            resp = re.search('{.*}', chunk.decode())
+            resp = re.search(self._re_text, chunk.decode())
             if not resp:
                 continue
             try:
-                data = json.loads(resp[0])
-            except json.decoder.JSONDecodeError:
-                logging.critical(f'Error decoding JSON:\n{resp[0]}')
+                data = json.loads(f'{{{resp[0]}}}')
+            except json.decoder.JSONDecodeError as e:
+                logging.critical(f'{e}:\n{resp[0]}')
                 continue
-            if 'choices' not in data:
-                continue
-            if 'text' not in data['choices'][0]:
-                continue
-            text = data['choices'][0]['text']
+            text = data['text']
             if not all_text:
                 text = text.lstrip()
             queue and queue.put(text)
             print(text, end='')
             all_text += text
         queue and queue.put(None)
-        print('')
+        print('')  # newline
+        logging.debug("Response finished")
         return all_text
 
 
