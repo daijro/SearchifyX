@@ -1,8 +1,6 @@
 import grequests
-import json
+import orjson as json
 from bs4 import BeautifulSoup
-from difflib import SequenceMatcher
-import json
 from requests_html import HTMLSession
 from fake_headers import Headers
 import re
@@ -13,6 +11,10 @@ from urllib.parse import urlencode
 from threading import Thread
 from merlin import MerlinScraper
 import logging
+import yaml
+import sqlite3
+from jellyfish import jaro_distance as similar
+from itertools import chain
 
 logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(levelname)s: %(message)s', datefmt='%H:%M:%S')
 
@@ -60,7 +62,6 @@ google_domains = (
 
 get_text  = lambda x: BeautifulSoup(x, features='lxml').get_text().strip()
 sluggify  = lambda a: ' '.join(a.lower().split())
-similar   = lambda a, b: SequenceMatcher(None, sluggify(a), sluggify(b)).ratio()
 remove_duplicates = lambda a: list(set(a))
 
 def _make_headers():
@@ -198,50 +199,47 @@ class QuizizzScraper:
     def parse_links(self):
         links = ['https://quizizz.com/quiz/' + u.split('/')[-2] for u in self.links]
         self.async_requests(links)
-        for resp in self.resps:
+        for link, resp in zip(self.links, self.resps):
             try:
-                self.quizizzs.append(self.quizizz_parser(resp))
+                self.quizizzs.append(self.quizizz_parser(link, resp))
             except Exception as e:
                 logging.info(f'Quizizz exception: {e} {resp.url}')
         return self.quizizzs
 
 
-    def quizizz_parser(self, resp):
-        data = resp.json()['data']['quiz']['info']
-        return max(
-            (
-                {
-                    'question': questr,
-                    'answer': get_text(
-                        question["structure"]["options"][
-                            int(question["structure"]["answer"])
-                        ]["text"]
-                    )
-                    or question["structure"]["options"][
+    def quizizz_parser(self, link, resp):
+        data = json.loads(resp.content)['data']['quiz']['info']
+        return [
+            {
+                'question': questr,
+                'answer': get_text(
+                    question["structure"]["options"][
                         int(question["structure"]["answer"])
-                    ]["media"][0]["url"]
-                    if question["type"] == "MCQ"
-                    else ', '.join(
-                        [
-                            get_text(
-                                question["structure"]["options"][int(answerC)]["text"]
-                            )
-                            or question["structure"]["options"][int(answerC)]["media"][0]["url"]
-                            for answerC in question["structure"]["answer"]
-                        ]
-                    )
-                    if question["type"] == "MSQ"
-                    else None,
-                    'similarity': (similar(questr, self.query), True),
-                    'url': resp.url,
-                }
-                for questr, question in [
-                    (get_text(x["structure"]["query"]["text"]), x)
-                    for x in data["questions"]
-                ]
-            ),
-            key=lambda x: x['similarity'],
-        )
+                    ]["text"]
+                )
+                or question["structure"]["options"][
+                    int(question["structure"]["answer"])
+                ]["media"][0]["url"]
+                if question["type"] == "MCQ"
+                else ', '.join(
+                    [
+                        get_text(
+                            question["structure"]["options"][int(answerC)]["text"]
+                        )
+                        or question["structure"]["options"][int(answerC)]["media"][0]["url"]
+                        for answerC in question["structure"]["answer"]
+                    ]
+                )
+                if question["type"] == "MSQ"
+                else None,
+                'similarity': (similar(questr, self.query), True),
+                'url': link,
+            }
+            for questr, question in [
+                (get_text(x["structure"]["query"]["text"]), x)
+                for x in data["questions"]
+            ]
+        ]
 
 
 
@@ -259,36 +257,33 @@ class QuizletScraper:
 
     def parse_links(self):
         self.async_requests(self.links)
-        for resp in self.resps:
+        for link, resp in zip(self.links, self.resps):
             try:
-                self.quizlets.append(self.quizlet_parser(resp))
+                self.quizlets.append(self.quizlet_parser(link, resp))
             except Exception as e:
                 logging.info(f'Quizlet exception: {e} {resp.url}')
         return self.quizlets
 
 
-    def quizlet_parser(self, resp):
+    def quizlet_parser(self, link, resp):
         terms_match = re.search(self._regex_obj, resp.text)
         if terms_match[1]:  # needs to be unescaped
             data = json.loads(terms_match[2].encode('utf-8').decode('unicode_escape'))
         else:
             data = json.loads(terms_match[2])
-        return max(
-            (
-                {
-                    'question': i['word'].strip(),
-                    'answer': i['definition'].strip(),
-                    'similarity': max(
-                        (similar(i[x], self.query), x == 'word')
-                        # (similarity: float, is_term: bool)
-                        for x in ['word', 'definition']
-                    ),
-                    'url': resp.url,
-                }
-                for i in data.values()
-            ),
-            key=lambda x: x['similarity'],
-        )
+        return [
+            {
+                'question': i['word'].strip(),
+                'answer': i['definition'].strip(),
+                'similarity': max(
+                    (similar(i[x], self.query), x == 'word')
+                    # (similarity: float, is_term: bool)
+                    for x in ['word', 'definition']
+                ),
+                'url': link,
+            }
+            for i in data.values()
+        ]
 
 
 class TimeLogger:
@@ -334,11 +329,23 @@ class Searchify:
         self.engine = engine
         self.timer = TimeLogger()
         self.flashcards = []
+        self.unsaved_cards = []
         self.links = []
         self.site_scrapers = {
             'quizlet': QuizletScraper,
             'quizizz': QuizizzScraper,
         }
+        # create database for saving flashcards
+        self.con = sqlite3.connect('flashcards.db', check_same_thread=False)
+        self.cur = self.con.cursor()
+        self.cur.execute(
+            "CREATE TABLE IF NOT EXISTS flashcards (question TEXT, answer TEXT, url TEXT, "
+            "UNIQUE(question, answer, url) ON CONFLICT IGNORE)")
+        self.con.commit()
+        # add function for character distance
+        self.con.create_function("similar", 2, similar)
+        self.con.commit()
+
 
     def main(self):
         self.get_links()
@@ -362,10 +369,13 @@ class Searchify:
 
         self.sort_flashcards()
         self.stop_time = time.time() - self.timer.elapsed_total
+        Thread(target=self.save_flashcards).start()  # save flashcards in background
         
 
     def _flashcard_thread(self, site_scraper, links, site_name):
-        self.flashcards += site_scraper(links, self.query).parse_links()
+        if items := site_scraper(links, self.query).parse_links():
+            self.flashcards += [max(f, key=lambda x: x['similarity'][0]) for f in items if f]
+            self.unsaved_cards += items
         self.timer.end(site_name, _thread_flag=True)
 
 
@@ -375,6 +385,31 @@ class Searchify:
         search_bing.search()
         self.timer.end()
         self.links = search_bing.links
+        self.match_db()
+    
+    
+    def match_db(self):
+        # check if links are already in database
+        for site in self.links:
+            for url in self.links[site][:]:
+                self.cur.execute("SELECT * FROM flashcards WHERE url=?", (url,))
+                if not self.cur.fetchone():
+                    continue  # skip if not in database
+                self.links[site].remove(url)
+                # get the top similar flashcard from the database
+                self.cur.execute("SELECT * FROM flashcards WHERE url=? ORDER BY similar(question, ?) DESC LIMIT 1", (url, self.query))
+                i = self.cur.fetchone()
+                similar_score = (similar(i[0], self.query), True)
+                self.flashcards.append(dict(zip(('question', 'answer', 'url', 'similarity'), (*i, similar_score))))
+
+
+    def save_flashcards(self):
+        self.cur.executemany(
+            "INSERT INTO flashcards VALUES (?, ?, ?)",
+            [(i['question'], i['answer'], i['url']) for i in chain.from_iterable(self.unsaved_cards)]
+        )
+        self.con.commit()
+        del self.unsaved_cards
 
 
     def sort_flashcards(self):  # sourcery skip: for-index-replacement
@@ -427,7 +462,7 @@ if __name__ == '__main__' and len(sys.argv) > 1:
     )
     s.main()
 
-    write(json.dumps(s.flashcards, indent=4))
+    write(json.dumps(s.flashcards, option=json.OPT_INDENT_2).decode())
     print(f'{len(s.flashcards)} flashcards found')
 
     s.timer.print_timers()
@@ -448,13 +483,13 @@ Query: "{args.query}"
 
 Data collected from FlashcardSearch, a web scraper that searches the internet for flashcards:
 {
-    json.dumps([
+    yaml.dump([
         {
-            'question': card['question'],
-            'answer': card['answer'],
-            'similarity': card['similarity'],
+            'Question': card['question'],
+            'Answer': card['answer'],
+            'Similarity': card['similarity'],
         }
         for card in s.flashcards
-    ], indent=4)
+    ])
 }
 """)
