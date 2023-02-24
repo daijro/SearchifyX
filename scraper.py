@@ -323,10 +323,10 @@ class TimeLogger:
 
 
 class Searchify:
-    def __init__(self, query, sites, engine):
+    def __init__(self, query, sites, engine=None):
         self.query = query
         self.sites = sites
-        self.engine = engine
+        self.engine = engine  # optional if using offline mode
         self.timer = TimeLogger()
         self.flashcards = []
         self.unsaved_cards = []
@@ -403,6 +403,19 @@ class Searchify:
                 self.flashcards.append(dict(zip(('question', 'answer', 'url', 'similarity'), (*i, similar_score))))
 
 
+    def main_offline(self, amount=20):
+        # drop in replacement for main() when offline. timers not supported
+        self.cur.execute(f"SELECT * FROM flashcards ORDER BY similar(question, ?) DESC LIMIT {amount}", (self.query,))
+        self.flashcards = [
+            {
+                'question': i[0],
+                'answer': i[1],
+                'url': i[2],
+                'similarity': f"{round(similar(i[0], self.query) * 100, 2)}%"
+            }
+            for i in self.cur.fetchall()
+        ]
+
     def save_flashcards(self):
         self.cur.executemany(
             "INSERT INTO flashcards VALUES (?, ?, ?)",
@@ -433,6 +446,7 @@ if __name__ == '__main__' and len(sys.argv) > 1:
     parser.add_argument('--sites',  '-s', help='question sources quizlet,quizizz (comma seperated list)', default='quizlet,quizizz')
     parser.add_argument('--engine', '-e', help='search engine to use', default='bing', choices=_web_engines.keys())
     parser.add_argument('--chatgpt', '-gpt', help='summarize the results in ChatGPT (expiremental)', action='store_true')
+    parser.add_argument('--search-db', '-db', help='search database n amount for flashcards. works offline', type=int, default=None)
     args = parser.parse_args()
 
     if args.output:
@@ -452,20 +466,23 @@ if __name__ == '__main__' and len(sys.argv) > 1:
     engine_name = args.engine.lower().strip()  # get search engine
 
     # start search engine
-    engine = SearchEngine(engine_name)
-    
-    # run search
-    s = Searchify(
-        query=args.query,
-        sites=sites,
-        engine=engine,
-    )
-    s.main()
+    if args.search_db:
+        s = Searchify(query=args.query, sites=sites)
+        s.main_offline(args.search_db)
+    else:
+        engine = SearchEngine(engine_name)
+        # run search
+        s = Searchify(
+            query=args.query,
+            sites=sites,
+            engine=engine,
+        )
+        s.main()
 
     write(json.dumps(s.flashcards, option=json.OPT_INDENT_2).decode())
     print(f'{len(s.flashcards)} flashcards found')
 
-    s.timer.print_timers()
+    not args.search_db and s.timer.print_timers()
     
     # get best answer with chatgpt
     if args.chatgpt:
@@ -489,7 +506,7 @@ Data collected from FlashcardSearch, a web scraper that searches the internet fo
             'Answer': card['answer'],
             'Similarity': card['similarity'],
         }
-        for card in s.flashcards
+        for card in s.flashcards[:10]
     ])
 }
 """)
