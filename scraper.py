@@ -9,9 +9,8 @@ import time
 from random import choice
 from urllib.parse import urlencode
 from threading import Thread
-from merlin import MerlinScraper
+from flashcardgpt import FlashcardGPT
 import logging
-import yaml
 import sqlite3
 from jellyfish import jaro_distance as similar
 from itertools import chain
@@ -79,7 +78,7 @@ _web_engines = {
     'bing': {
         'domain': 'https://www.bing.com/',
         'query': 'q',
-        'args': {'ghsh': '0', 'ghacc': '0', 'ghpl': ''},
+        'args': {'lq': '0', 'ghsh': '0', 'ghacc': '0', 'ghpl': ''},
         'limit': 990,
         'start_sess': True,
     },
@@ -444,7 +443,7 @@ if __name__ == '__main__' and len(sys.argv) > 1:
     parser.add_argument('--query',  '-q', help='query to search for',  default=None)
     parser.add_argument('--output', '-o', help='output file',          default=None)
     parser.add_argument('--sites',  '-s', help='question sources quizlet,quizizz (comma seperated list)', default='quizlet,quizizz')
-    parser.add_argument('--engine', '-e', help='search engine to use', default='bing', choices=_web_engines.keys())
+    parser.add_argument('--engine', '-e', help='search engine to use', default='duckduckgo', choices=_web_engines.keys())
     parser.add_argument('--chatgpt', '-gpt', help='summarize the results in ChatGPT (expiremental)', action='store_true')
     parser.add_argument('--search-db', '-db', help='search database n amount for flashcards. works offline', type=int, default=None)
     args = parser.parse_args()
@@ -485,28 +484,9 @@ if __name__ == '__main__' and len(sys.argv) > 1:
     not args.search_db and s.timer.print_timers()
     
     # get best answer with chatgpt
-    if args.chatgpt:
+    if args.chatgpt and s.flashcards:
         print('\n--------------------\nCHATGPT SUMMARIZATION:')
-        chatgpt = MerlinScraper()
-        print('') # newline
-        chatgpt.prompt(f"""
-Instuctions: You are now FlashcardGPT. A student queries a quiz question into the web search. Using the provided data from FlashcardSearch, which flashcard most likely answers to the student's query? Return the most frequent and similar answer.
-
-Start with "Best Answer:", and explain the question and how the answer is correct. Example:
-Best Answer: X
-Explanation: ...
-
-Query: "{args.query}"
-
-Data collected from FlashcardSearch, a web scraper that searches the internet for flashcards:
-{
-    yaml.dump([
-        {
-            'Question': card['question'],
-            'Answer': card['answer'],
-            'Similarity': card['similarity'],
-        }
-        for card in s.flashcards[:10]
-    ])
-}
-""")
+        logging.info('Loading result from gpt-3.5-turbo api')
+        chatgpt = FlashcardGPT()
+        result = chatgpt.run(args.query, s.flashcards[:10])
+        print('\n' + result)
