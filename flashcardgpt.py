@@ -4,7 +4,7 @@ import orjson
 from multiprocessing import Queue, Process
 import re
 import json
-from threading import Thread
+from threading import Thread, Lock
 from mailtm import Email
 import pickle
 import os
@@ -42,6 +42,7 @@ class FlashcardGPT:
         return orjson.dumps(formatted_list, option=orjson.OPT_INDENT_2).decode()
 
     def run(self, query, cards):
+        logging.info('Loading result from claude-instant-v1.0 api')
         return self.get(
             self.prompt.format(
                 query=query,
@@ -75,6 +76,11 @@ class NatScraper(FlashcardGPT):
             logging.info(f"Using saved session: {self.sess_id}")
         else:
             self.sua_id, self.sess_id = self.registerAccount()
+        # Update header origin
+        self.sess.headers.update({
+            'Origin': f'https://{self.domain}',
+            'Referer': f'https://{self.domain}/'
+        })
         # Start token refresher
         Thread(target=self.token_refresher, daemon=True).start()
     
@@ -156,9 +162,6 @@ class NatScraper(FlashcardGPT):
 
         self.refresh_jwt()
         
-        # save cookies to file
-        with open('pickle.bin', 'wb') as f:
-            pickle.dump(self.sess.cookies, f)
         with open('session_id.json', 'w') as f:
             f.write(json.dumps({
                 'sua_id': self.sua_id,
@@ -166,18 +169,25 @@ class NatScraper(FlashcardGPT):
             }))
         return self.sua_id, self.sess_id
 
-
     def refresh_jwt(self):
-        logging.info('Refreshing JWT')
-        url = f"https://clerk.{self.domain}/v1/client/sessions/{self.sess_id}/tokens?_clerk_js_version=4.32.6"
-        resp = self.sess.post(url)
-        jwt = resp.json()['jwt']
-        self.sess.headers['Authorization'] = f"Bearer {jwt}"
-        self.sess.cookies.set('_session', jwt)
+        with Lock():
+            logging.info('Refreshing JWT')
+            if 'Authorization' in self.sess.headers:
+                del self.sess.headers['Authorization']
+            url = f"https://clerk.{self.domain}/v1/client/sessions/{self.sess_id}/tokens?_clerk_js_version=4.32.6"
+            resp = self.sess.post(url)
+            jwt = resp.json()['jwt']
+            self.sess.headers['Authorization'] = f"Bearer {jwt}"
+            self.sess.cookies.set('_session', jwt)
+            self.save_cookies()
+
+    def save_cookies(self):
+        # save cookies to file
+        with open('pickle.bin', 'wb') as f:
+            pickle.dump(self.sess.cookies, f)
 
     def get(self, prompt):
         # print(self.sess.get(f"https://{self.domain}/api/all_models").json())
-        logging.info('Loading result from claude-instant-v1.0 api')
         data = {
             "prompt": prompt,
             "models": [{
@@ -214,3 +224,18 @@ class NatScraper(FlashcardGPT):
                     first_message = False
                 yield data['message']
                 last_message = data['message']
+
+
+if __name__ == '__main__':
+    chatgpt = NatScraper()
+    thread = chatgpt.async_start()
+    thread.join()
+    try:
+        while True:
+            inp = input('>> ')        
+            for chunk in chatgpt.get(inp):
+                print(chunk, end='')
+            print('')
+    except KeyboardInterrupt:
+        logging.info('Exiting')
+        exit()
