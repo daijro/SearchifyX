@@ -38,3 +38,7 @@ Temporary Items
 
 # Flashcard database
 flashcards.db
+
+# FlashcardGPT session files
+session_id.json
+pickle.bin

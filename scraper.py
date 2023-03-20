@@ -1,19 +1,19 @@
-import grequests
-import orjson as json
-from bs4 import BeautifulSoup
-from requests_html import HTMLSession
-from fake_headers import Headers
-import re
-import sys
-import time
-from random import choice
-from urllib.parse import urlencode
-from threading import Thread
-from flashcardgpt import FlashcardGPT
+if __name__ != '__mp_main__':
+    import grequests  # gevent patching causes issues with mailtm
+    import orjson
+    from bs4 import BeautifulSoup
+    from requests_html import HTMLSession
+    from fake_headers import Headers
+    import re
+    import sys
+    import time
+    from random import choice
+    from urllib.parse import urlencode
+    from threading import Thread
+    import sqlite3
+    from jellyfish import jaro_distance as similar
+    from itertools import chain
 import logging
-import sqlite3
-from jellyfish import jaro_distance as similar
-from itertools import chain
 
 logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(levelname)s: %(message)s', datefmt='%H:%M:%S')
 
@@ -178,6 +178,8 @@ class SearchWeb:
         search web for query
         """
         resps = self.engine.get_page(self.query, self.sites)
+        if None in resps.values():
+            raise Exception('Error searching web')
         self.links = {
             site: remove_duplicates(re.findall(self._regex_objs[site], resps[site].text))
             for site in self.sites
@@ -207,7 +209,7 @@ class QuizizzScraper:
 
 
     def quizizz_parser(self, link, resp):
-        data = json.loads(resp.content)['data']['quiz']['info']
+        data = orjson.loads(resp.content)['data']['quiz']['info']
         return [
             {
                 'question': questr,
@@ -267,9 +269,9 @@ class QuizletScraper:
     def quizlet_parser(self, link, resp):
         terms_match = re.search(self._regex_obj, resp.text)
         if terms_match[1]:  # needs to be unescaped
-            data = json.loads(terms_match[2].encode('utf-8').decode('unicode_escape'))
+            data = orjson.loads(terms_match[2].encode('utf-8').decode('unicode_escape'))
         else:
-            data = json.loads(terms_match[2])
+            data = orjson.loads(terms_match[2])
         return [
             {
                 'question': i['word'].strip(),
@@ -457,6 +459,11 @@ if __name__ == '__main__' and len(sys.argv) > 1:
     if not args.query:
         print('No input specified')
         exit()
+    
+    if args.chatgpt:
+        from flashcardgpt import NatScraper
+        chatgpt = NatScraper()
+        s_thread = chatgpt.async_start()
 
     # main program
     flashcards = [] # create flashcard list
@@ -478,7 +485,7 @@ if __name__ == '__main__' and len(sys.argv) > 1:
         )
         s.main()
 
-    write(json.dumps(s.flashcards, option=json.OPT_INDENT_2).decode())
+    write(orjson.dumps(s.flashcards, option=orjson.OPT_INDENT_2).decode())
     print(f'{len(s.flashcards)} flashcards found')
 
     not args.search_db and s.timer.print_timers()
@@ -486,7 +493,9 @@ if __name__ == '__main__' and len(sys.argv) > 1:
     # get best answer with chatgpt
     if args.chatgpt and s.flashcards:
         print('\n--------------------\nCHATGPT SUMMARIZATION:')
-        logging.info('Loading result from gpt-3.5-turbo api')
-        chatgpt = FlashcardGPT()
-        result = chatgpt.run(args.query, s.flashcards[:10])
-        print('\n' + result)
+        s_thread.join()
+        for chunk in chatgpt.run(args.query, s.flashcards[:10]):
+            print(chunk, end='')
+        print('')
+        # fix greenlet: WARNING: failed in call to Py_AddPendingCall; expect a memory leak.
+        
