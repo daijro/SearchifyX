@@ -192,19 +192,18 @@ class NatScraper(FlashcardGPT):
             "prompt": prompt,
             "models": [{
                 "name": "anthropic:claude-instant-v1.0",
-                "tag": "anthropic:claude-instant-v1.0",
+                "enabled": True,
+                "selected": True,
                 "provider": "anthropic",
+                "tag": "anthropic:claude-instant-v1.0",
                 "parameters": {
                     "temperature": 1,
-                    "maximum_length": 200,
-                    "top_p": 1,
-                    "top_k": 1,
-                    "presence_penalty": 1,
-                    "frequency_penalty": 1,
-                    "repetition_penalty": 1,
-                    "num_beams": 1,
-                    "num_return_sequences": 1,
-                    "stop_sequences": None
+                    "maximumLength": 200,
+                    "topP": 1,
+                    "topK": 1,
+                    "presencePenalty": 1,
+                    "frequencyPenalty": 1,
+                    "stopSequences": []
                 }
             }]
         }
