@@ -24,7 +24,7 @@ class FlashcardGPT:
     prompt = "Instuctions: You are now FlashcardGPT. A student queries a quiz question into the web search. Using the " \
              "provided data from FlashcardSearch, which flashcard most likely answers to the student's query? Return the most frequent " \
              "and similar answer.\n\nStart with \"Best Answer:\", and briefly explain how the answer is correct. " \
-             "Example:\nBest Answer: ...\nExplanation: ...\n\n" \
+             "Example:\n\nBest Answer: X\nExplanation: ...\n\n" \
              "Query: {query}\n\nData collected from FlashcardSearch, a web scraper that searches the internet for flashcards:\n{data}\n\n" \
     
     def __init__(self):
