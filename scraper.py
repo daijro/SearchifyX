@@ -5,6 +5,7 @@ if __name__ != '__mp_main__':
     from requests_html import HTMLSession
     from fake_headers import Headers
     import re
+    import os
     import sys
     import time
     from random import choice
@@ -16,6 +17,15 @@ if __name__ != '__mp_main__':
 import logging
 
 logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(levelname)s: %(message)s', datefmt='%H:%M:%S')
+
+
+def resource_path(relative_path):
+    try:
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.dirname(__file__)
+    return os.path.join(base_path, relative_path)
+
 
 headers = {
     "Sec-Ch-Ua": "\"(Not(A:Brand\";v=\"8\", \"Chromium\";v=\"99\"",
@@ -337,7 +347,7 @@ class Searchify:
             'quizizz': QuizizzScraper,
         }
         # create database for saving flashcards
-        self.con = sqlite3.connect('flashcards.db', check_same_thread=False)
+        self.con = sqlite3.connect(resource_path('flashcards.db'), check_same_thread=False)
         self.cur = self.con.cursor()
         self.cur.execute(
             "CREATE TABLE IF NOT EXISTS flashcards (question TEXT, answer TEXT, url TEXT, "
