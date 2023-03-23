@@ -10,6 +10,7 @@ import pickle
 import os
 import logging
 import time
+from bs4 import BeautifulSoup, SoupStrainer
 from base64 import b64decode
 
 # logging
@@ -131,8 +132,23 @@ class NatScraper(FlashcardGPT):
         logging.info("Sending sign up request")
         resp0_url = f"https://clerk.{self.domain}/v1/client/sign_ups?_clerk_js_version=4.32.6"
         resp0_cookies = {"__client_uat": "0"}
-        resp0_data = {"email_address": self.email_queue.get()}
-        resp0 = self.sess.post(resp0_url, cookies=resp0_cookies, data=resp0_data)
+        
+        def check_error(resp_dict):
+            if resp_dict.get('errors'):
+                logging.error(f"Error: {resp_dict['errors'][0].get('long_message') or resp_dict['errors'][0].get('message')}")
+                return True
+        
+        while True:
+            phone = input('> A valid phone number is required to register an account. You will be asked to enter a One Time Verification code. Temp phone numbers will work. Please enter a phone number (ex: +1234567890):\n').strip()
+            if not re.match(r'^\+\d+$', phone):
+                print('> Invalid phone number format. Please try again.')
+                continue            
+            resp0_data = {"email_address": self.email_queue.get(), "phone_number": phone}
+            resp0 = self.sess.post(resp0_url, cookies=resp0_cookies, data=resp0_data)
+            resp0_json = resp0.json()
+            if check_error(resp0_json):
+                continue
+            break
 
         self.sua_id = resp0.json()['response']['id']
         logging.info(f"Session ID: {self.sua_id}")
@@ -151,10 +167,25 @@ class NatScraper(FlashcardGPT):
         # GET  v1/verify?token=TOKEN_HERE - sets cookie, returns "Location" header (follow)
         logging.info("Verifying email")
         self.sess.get(email_url)
+        
+        # NOW VERIFY PHONE
+        self.sess.post(resp1_url, data={'strategy': 'phone_code'})  # prepare the request
+        resp2_url = f"https://clerk.{self.domain}/v1/client/sign_ups/{self.sua_id}/attempt_verification?_clerk_js_version=4.32.6"
+        while True:
+            code = input('> Please enter the One Time Verification code sent to your phone:\n').strip()
+            if not re.match(r'^\d{6}$', code):
+                print('> Invalid code format. Please try again.')
+                continue
+            resp2_data = {'code': code, 'strategy': 'phone_code'}
+            resp2 = self.sess.post(resp2_url, data=resp2_data)
+            resp2_json = resp2.json()
+            if check_error(resp2_json):
+                continue
+            break
 
         logging.info("Retrieving JWT")
-        resp2 = self.sess.get(f"https://clerk.{self.domain}/v1/client?_clerk_js_version=4.32.6")
-        self.sess_id = resp2.json()['response']['sessions'][0]['id']
+        resp3 = self.sess.get(f"https://clerk.{self.domain}/v1/client?_clerk_js_version=4.32.6")
+        self.sess_id = resp3.json()['response']['sessions'][0]['id']
         # self.sess.post(f"https://clerk.{self.domain}/v1/client/sessions/{self.sess_id}/touch?_clerk_js_version=4.32.6")
         # resp3 = self.sess.get(f"https://clerk.{self.domain}/v1/client?_clerk_js_version=4.32.6")
         # jwt = resp3.json()['response']['sessions'][0]['last_active_token']['jwt']
@@ -187,7 +218,7 @@ class NatScraper(FlashcardGPT):
             pickle.dump(self.sess.cookies, f)
 
     def get(self, prompt):
-        # print(self.sess.get(f"https://{self.domain}/api/all_models").json())
+        # model_default = self.sess.get(f"https://{self.domain}/api/all_models").json()["anthropic:claude-instant-v1.0"]
         data = {
             "prompt": prompt,
             "models": [{
@@ -225,15 +256,20 @@ class NatScraper(FlashcardGPT):
                 last_message = data['message']
 
 
+
 if __name__ == '__main__':
     chatgpt = NatScraper()
     thread = chatgpt.async_start()
     thread.join()
+    prompt = ''
     try:
         while True:
-            inp = input('>> ')        
-            for chunk in chatgpt.get(inp):
+            inp = input('>> ')
+            prompt += f'User: {inp}\n\nAssistant: '
+            for chunk in chatgpt.get(prompt):
                 print(chunk, end='')
+                prompt += chunk
+            prompt += '\n\n'
             print('')
     except KeyboardInterrupt:
         logging.info('Exiting')
