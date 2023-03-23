@@ -792,22 +792,12 @@
                    </property>
                    <item>
                     <property name="text">
-                     <string>Bing</string>
-                    </property>
-                   </item>
-                   <item>
-                    <property name="text">
-                     <string>DuckDuckGo</string>
-                    </property>
-                   </item>
-                   <item>
-                    <property name="text">
                      <string>Google</string>
                     </property>
                    </item>
                    <item>
                     <property name="text">
-                     <string>Startpage</string>
+                     <string>DuckDuckGo</string>
                     </property>
                    </item>
                   </widget>
