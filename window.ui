@@ -400,7 +400,7 @@
                <bool>true</bool>
               </property>
               <layout class="QGridLayout" name="gridLayout_9">
-               <item row="10" column="0">
+               <item row="11" column="0">
                 <layout class="QGridLayout" name="gridLayout_7">
                  <item row="0" column="1" colspan="2">
                   <widget class="QComboBox" name="themeInput">
@@ -499,7 +499,7 @@
                  </item>
                 </layout>
                </item>
-               <item row="4" column="0">
+               <item row="5" column="0">
                 <widget class="QCheckBox" name="setting_save_transp">
                  <property name="text">
                   <string>Remember window transparency</string>
@@ -519,17 +519,14 @@
                  </property>
                 </widget>
                </item>
-               <item row="2" column="0">
-                <widget class="QCheckBox" name="setting_rightclick_reset">
+               <item row="7" column="0">
+                <widget class="QCheckBox" name="setting_save_focus">
                  <property name="text">
-                  <string>Right-click title bar to reset window position</string>
-                 </property>
-                 <property name="checked">
-                  <bool>true</bool>
+                  <string>Remember state for window focus safety lock </string>
                  </property>
                 </widget>
                </item>
-               <item row="5" column="0">
+               <item row="6" column="0">
                 <widget class="QCheckBox" name="setting_save_pos">
                  <property name="text">
                   <string>Remember window position</string>
@@ -539,13 +536,10 @@
                  </property>
                 </widget>
                </item>
-               <item row="6" column="0">
-                <widget class="QCheckBox" name="setting_save_focus">
+               <item row="3" column="0">
+                <widget class="QCheckBox" name="setting_rightclick_reset">
                  <property name="text">
-                  <string>Remember state for window focus safety lock </string>
-                 </property>
-                 <property name="checked">
-                  <bool>false</bool>
+                  <string>Right-click title bar to reset window position</string>
                  </property>
                 </widget>
                </item>
@@ -553,6 +547,16 @@
                 <widget class="QCheckBox" name="setting_hide_taskbar">
                  <property name="text">
                   <string>Don't show in taskbar</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="2" column="0">
+                <widget class="QCheckBox" name="setting_hide_window">
+                 <property name="text">
+                  <string>Hide from screen capture</string>
+                 </property>
+                 <property name="checked">
+                  <bool>false</bool>
                  </property>
                 </widget>
                </item>

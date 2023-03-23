@@ -1,7 +1,7 @@
 {
     "quizlet": true,
     "quizizz": true,
-    "search_engine": 1,
+    "search_engine": 2,
     "hide_show_key": "Ctrl+D",
     "ocr_key": "Ctrl+Shift+X",
     "paste_key": "Ctrl+Shift+V",
@@ -15,6 +15,7 @@
     "rclick_reset": true,
     "on_top": true,
     "hide_taskbar": false,
+    "hide_window": false,
     "theme": 0,
     "font_size": 10
 }

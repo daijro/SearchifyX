@@ -91,6 +91,8 @@ Optional arguments:
 
 - Option to not show in taskbar
 
+- Hides from screen capture
+
 <hr width=30>
 
 

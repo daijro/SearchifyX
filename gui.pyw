@@ -130,6 +130,9 @@ class UI(QMainWindow):
 
         self.setting_hide_taskbar.setChecked(self.conf['hide_taskbar'])
         self.setting_hide_taskbar.toggled.connect(lambda: self.set_hide_taskbar())
+        
+        self.setting_hide_window.setChecked(self.conf['hide_window'])
+        self.setting_hide_window.toggled.connect(lambda: self.set_hide_window())
 
         if self.conf['save_focus'] != None:
             self.setting_save_focus.setChecked(True)
@@ -205,9 +208,9 @@ class UI(QMainWindow):
             self.set_window_geometry()
         self.set_window_opacity()
         self.set_window_theme()
+        self.dc = int(self.winId())
         self.set_hide_taskbar()
 
-        self.dc = int(self.winId())
         self.active_button_toggle(self.toggle_noactive.isChecked())
 
         self._pressed = False
@@ -544,6 +547,16 @@ class UI(QMainWindow):
 
     # toggle always on top
 
+    def set_hide_window(self):
+        self.set_window_affinity()
+        self.updatejson('hide_window')
+
+    def set_window_affinity(self):
+        if self.setting_hide_window.isChecked():
+            ctypes.windll.user32.SetWindowDisplayAffinity(self.dc, 0x11)
+        else:
+            ctypes.windll.user32.SetWindowDisplayAffinity(self.dc, 0)
+
     def set_window_on_top(self):
         if self.setting_on_top.isChecked() or self.toggle_noactive.isChecked():
             self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint)
@@ -551,6 +564,8 @@ class UI(QMainWindow):
             self.setWindowFlags(self.windowFlags() & ~Qt.WindowStaysOnTopHint)
         self.updatejson('on_top')
         self.windowEffect.addWindowAnimation(self.winId()) # add back animation
+        ctypes.windll.user32.SetWindowDisplayAffinity(self.dc, 0x11)
+        self.set_window_affinity()
         self.show()
 
     def set_hide_taskbar(self):
@@ -561,6 +576,7 @@ class UI(QMainWindow):
             self.setWindowFlags(self.windowFlags() & ~Qt.Tool)
             self.minimize_button.setVisible(not self.toggle_noactive.isChecked())
         self.updatejson('hide_taskbar')
+        self.set_window_affinity()
         self.show()
 
     # saving/opening config
@@ -587,6 +603,7 @@ class UI(QMainWindow):
             "rclick_reset":    lambda: self.setting_rightclick_reset.isChecked(),
             "on_top":          lambda: self.setting_on_top.isChecked(),
             "hide_taskbar":    lambda: self.setting_hide_taskbar.isChecked(),
+            "hide_window":     lambda: self.setting_hide_window.isChecked(),
             "theme":           lambda: self.themeInput.currentIndex(),
             "font_size":       lambda: self.font_size.value(),
             "search_engine":   lambda: self.search_engine_combo.currentIndex(),
