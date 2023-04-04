@@ -16,7 +16,13 @@ if __name__ != '__mp_main__':
     from itertools import chain
 import logging
 
-logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(levelname)s: %(message)s', datefmt='%H:%M:%S')
+# set logger
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+ch = logging.StreamHandler()
+ch.setFormatter(logging.Formatter('[%(asctime)s] %(levelname)s: %(message)s', datefmt='%H:%M:%S'))
+logger.propagate = False
+logger.addHandler(ch)
 
 
 def resource_path(relative_path):
@@ -111,7 +117,7 @@ class SearchEngine:
         self.sess = HTMLSession()
         self.engine_name = engine_name
         self.sess.headers.update({**headers, "Sec-Fetch-Site": "same-origin", 'Referer': _web_engines[self.engine_name]['domain']})
-        logging.info('Starting instance...')
+        logger.info('Starting instance...')
         self.t = Thread(target=self._init_search)
         self.t.daemon = True
         self.t.start()
@@ -214,7 +220,7 @@ class QuizizzScraper:
             try:
                 self.quizizzs.append(self.quizizz_parser(link, resp))
             except Exception as e:
-                logging.info(f'Quizizz exception: {e} {resp.url}')
+                logger.info(f'Quizizz exception: {e} {resp.url}')
         return self.quizizzs
 
 
@@ -272,7 +278,7 @@ class QuizletScraper:
             try:
                 self.quizlets.append(self.quizlet_parser(link, resp))
             except Exception as e:
-                logging.info(f'Quizlet exception: {e} {resp.url}')
+                logger.info(f'Quizlet exception: {e} {resp.url}')
         return self.quizlets
 
 
@@ -376,7 +382,7 @@ class Searchify:
 
         for n, T in enumerate(threads):
             T.join()
-            logging.info(f'Thread {n} finished')
+            logger.info(f'Thread {n} finished')
 
         self.sort_flashcards()
         self.stop_time = time.time() - self.timer.elapsed_total
@@ -471,8 +477,8 @@ if __name__ == '__main__' and len(sys.argv) > 1:
         exit()
     
     if args.chatgpt:
-        from flashcardgpt import NatScraper
-        chatgpt = NatScraper()
+        from flashcardgpt import PoeScraper
+        chatgpt = PoeScraper()
         s_thread = chatgpt.async_start()
 
     # main program

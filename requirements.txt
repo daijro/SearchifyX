@@ -25,6 +25,7 @@ orjson==3.8.6
 packaging==22.0
 parse==1.19.0
 Pillow==9.3.0
+poe-api==0.2.4
 pycparser==2.21
 pyee==8.2.2
 pyperclip==1.8.2
@@ -33,7 +34,9 @@ PyQt5==5.15.7
 PyQt5-Qt5==5.15.2
 PyQt5-sip==12.11.0
 pyquery==1.4.3
+PySocks==1.7.1
 pytesseract==0.3.10
+python-socks==2.2.0
 pywin32==305
 PyYAML==6.0
 requests==2.28.1
@@ -45,6 +48,7 @@ tqdm==4.64.1
 urllib3==1.26.13
 w3lib==2.1.1
 webencodings==0.5.1
+websocket-client==1.5.1
 websockets==10.4
 zipp==3.11.0
 zope.event==4.6

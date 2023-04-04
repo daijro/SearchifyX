@@ -4,21 +4,24 @@ import orjson
 from multiprocessing import Queue, Process
 import re
 import json
-from threading import Thread, Lock
+from threading import Thread
 from mailtm import Email
-import pickle
 import os
 import logging
-import time
 from bs4 import BeautifulSoup, SoupStrainer
 from base64 import b64decode
+import poe
+
 
 # logging
-logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(levelname)s: %(message)s', datefmt='%H:%M:%S')
-
-# base64 decode
-def atob(s):
-    return b64decode(s).decode()
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+ch = logging.StreamHandler()
+ch.setFormatter(logging.Formatter('[%(asctime)s] %(levelname)s: %(message)s', datefmt='%H:%M:%S'))
+logger.propagate = False
+logger.addHandler(ch)
+# poe logging
+poe.logger.setLevel(logging.WARNING)
 
 
 class FlashcardGPT:    
@@ -43,7 +46,6 @@ class FlashcardGPT:
         return orjson.dumps(formatted_list, option=orjson.OPT_INDENT_2).decode()
 
     def run(self, query, cards):
-        logging.info('Loading result from claude-instant-v1.0 api')
         return self.get(
             self.prompt.format(
                 query=query,
@@ -52,19 +54,47 @@ class FlashcardGPT:
         )
 
 
-class NatScraper(FlashcardGPT):
-    domain = atob('bmF0LmRldg==')
+class PoeAPI:
+    def __init__(self, queue_in, queue_out, token):
+        self.queue_in = queue_in
+        self.queue_out = queue_out
+        self.client = poe.Client(token)
+        self.manager()
+    
+    def manager(self):
+        while True:
+            prompt = self.queue_in.get()
+            for chunk in self.get(prompt):
+                self.queue_out.put(chunk)
+    
+    def get(self, prompt):
+        logger.info('Loading result from claude-instant-v1.0 api')
+        first_message = True
+        full_message = ''
+        for chunk in self.client.send_message("a2", prompt):
+            if first_message or full_message.endswith(': '):  # remove leading whitespace
+                chunk["text_new"] = chunk["text_new"].lstrip()
+                first_message = False
+            yield chunk["text_new"]
+            full_message += chunk["text_new"]
+        del full_message  # clear memory
+        yield None
+
+
+class PoeScraper(FlashcardGPT):
+    domain = b64decode('cG9lLmNvbQ==').decode()
     headers = {
+        "Cache-Control": "max-age=0",
         "Sec-Ch-Ua": "\"Not?A_Brand\";v=\"8\", \"Chromium\";v=\"108\"",
-        "Sec-Ch-Ua-Platform": "\"Windows\"",
         "Sec-Ch-Ua-Mobile": "?0",
+        "Sec-Ch-Ua-Platform": "\"Windows\"",
+        "Upgrade-Insecure-Requests": "1",
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.5359.125 Safari/537.36",
-        "Content-Type": "application/x-www-form-urlencoded",
-        "Accept": "*/*",
-        "Origin": atob("aHR0cHM6Ly9hY2NvdW50cy5uYXQuZGV2"),
-        "Sec-Fetch-Site": "same-site",
-        "Sec-Fetch-Mode": "cors",
-        "Sec-Fetch-Dest": "empty",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+        "Sec-Fetch-Site": "same-origin",
+        "Sec-Fetch-Mode": "navigate",
+        "Sec-Fetch-User": "?1",
+        "Sec-Fetch-Dest": "document",
         "Accept-Encoding": "gzip, deflate",
         "Accept-Language": "en-US,en;q=0.9"
     }
@@ -73,50 +103,39 @@ class NatScraper(FlashcardGPT):
         self.sess.headers.update(self.headers)
         # Get previous session
         if prev_sess := self.getSavedSession():
-            self.sua_id, self.sess_id = prev_sess
-            logging.info(f"Using saved session: {self.sess_id}")
+            self.token = prev_sess
+            logger.info(f"Using saved session: {self.token}")
         else:
-            self.sua_id, self.sess_id = self.registerAccount()
-        # Update header origin
-        self.sess.headers.update({
-            'Origin': f'https://{self.domain}',
-            'Referer': f'https://{self.domain}/'
-        })
-        # Start token refresher
-        Thread(target=self.token_refresher, daemon=True).start()
+            self.token = self.registerAccount()
+        self.poe_queue_in, self.poe_queue_out = Queue(), Queue()
+        Process(target=PoeAPI, args=(self.poe_queue_in, self.poe_queue_out, self.token), daemon=True).start()
     
     def async_start(self):
         s_thread = Thread(target=self.start, daemon=True)
         s_thread.start()
         return s_thread
     
-    def token_refresher(self):
-        while True:
-            time.sleep(50)
-            self.refresh_jwt()
-    
     def getSavedSession(self):
-        if os.path.exists("pickle.bin"):
-            with open("pickle.bin", "rb") as f:
-                self.sess.cookies.update(pickle.load(f))
-            with open("session_id.json", "r") as f:
-                self.sua_id, self.sess_id = json.load(f).values()
-            self.refresh_jwt()
-            return self.sua_id, self.sess_id
+        if os.path.exists("poe_token.json"):
+            with open("poe_token.json", "r") as f:
+                token = json.load(f)['token']
+            return token
 
     def verifyEmailListener(self):
         listen_queue = Queue()
         def listener(message):
-            txt = message['text'] or message['html']
-            listen_queue.put(re.search('https://[^\s]+', txt)[0])
+            html = message['html'][0]
+            soup = BeautifulSoup(html, 'lxml', parse_only=SoupStrainer('table'))
+            code = re.search(r'\d+', soup.text)[0]
+            listen_queue.put(code)
 
-        logging.info("Registering email")
+        logger.info("Registering email")
         # Get Domains
         test = Email()
 
         # Make new email address
         test.register()
-        logging.info(f"Email Adress: {str(test.address)}")
+        logger.info(f"Email Adress: {str(test.address)}")
         self.email_queue.put(test.address)
 
         # Start listening
@@ -128,137 +147,82 @@ class NatScraper(FlashcardGPT):
         self.email_queue = Queue()
         Process(target=self.verifyEmailListener, daemon=True).start()
 
-        # Get sign up request
-        logging.info("Sending sign up request")
-        resp0_url = f"https://clerk.{self.domain}/v1/client/sign_ups?_clerk_js_version=4.32.6"
-        resp0_cookies = {"__client_uat": "0"}
+        # Fetching settings
+        logger.info("Starting session")
+        self.sess.get(f'https://{self.domain}/login')
+        # Update headers for internal api access
+        self.sess.headers.update({
+            "Accept": "*/*",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Dest": "empty",
+            "Referer": f"https://{self.domain}/login",
+        })
+        # Getting api settings
+        logger.info("Getting API settings")
+        api_settings = self.sess.get(f'https://{self.domain}/api/settings').json()
+        self.sess.headers.update({
+            'Content-Type': 'application/json',
+            'Poe-Formkey': api_settings['formkey'],
+            'Poe-Tchannel': api_settings['tchannelData']['channel'],
+        })
         
-        def check_error(resp_dict):
-            if resp_dict.get('errors'):
-                logging.error(f"Error: {resp_dict['errors'][0].get('long_message') or resp_dict['errors'][0].get('message')}")
-                return True
+        def check_error(resp_data, data_name):
+            if resp_data['data'][data_name].get('errorMessage'):
+                logging.error(f"Error: {resp_data['data']['sendVerificationCode']['errorMessage']}")
+                exit()
         
-        while True:
-            phone = input('> A valid phone number is required to register an account. You will be asked to enter a One Time Verification code. Temp phone numbers will work. Please enter a phone number (ex: +1234567890):\n').strip()
-            if not re.match(r'^\+\d+$', phone):
-                print('> Invalid phone number format. Please try again.')
-                continue            
-            resp0_data = {"email_address": self.email_queue.get(), "phone_number": phone}
-            resp0 = self.sess.post(resp0_url, cookies=resp0_cookies, data=resp0_data)
-            resp0_json = resp0.json()
-            if check_error(resp0_json):
-                continue
-            break
-
-        self.sua_id = resp0.json()['response']['id']
-        logging.info(f"Session ID: {self.sua_id}")
-
-        # POST /v1/client/sign_ups/sua/prepare_verification?_clerk_js_version=4.32.6 - send email
-        logging.info("Sending verification email")
-        resp1_url = f"https://clerk.{self.domain}/v1/client/sign_ups/{self.sua_id}/prepare_verification?_clerk_js_version=4.32.6"
-        resp1_data = {"strategy": "email_link", "redirect_url": f"https://accounts.{self.domain}/sign-up/verify?redirect_url=https%3A%2F%2F{self.domain}%2F"}
-        self.sess.post(resp1_url, data=resp1_data)
-
-        # LINK THROUGH EMAIL
-        logging.info("Waiting for email")
-        email_url = self.email_queue.get()
-        logging.info("Email recieved. Closing email listener")
-
-        # GET  v1/verify?token=TOKEN_HERE - sets cookie, returns "Location" header (follow)
-        logging.info("Verifying email")
-        self.sess.get(email_url)
+        # Send confirmation email
+        logger.info("Sending confirmation email")
+        address = self.email_queue.get()
+        data0 = {
+            "queryName": "MainSignupLoginSection_sendVerificationCodeMutation_Mutation",
+            "variables": {
+                "emailAddress": address,
+                "phoneNumber": None
+            },
+            "query": "mutation MainSignupLoginSection_sendVerificationCodeMutation_Mutation(\n  $emailAddress: String\n  $phoneNumber: String\n) {\n  sendVerificationCode(verificationReason: login, emailAddress: $emailAddress, phoneNumber: $phoneNumber) {\n    status\n    errorMessage\n  }\n}\n"
+        }
+        signup_confirmation1 = self.sess.post(f'https://{self.domain}/api/gql_POST', json=data0).json()
+        check_error(signup_confirmation1, 'sendVerificationCode')
+            
+        # Verifying email
+        otp = self.email_queue.get()
+        logger.info(f"Found verification code: {otp}")
+        data1 = {
+            "queryName": "SignupOrLoginWithCodeSection_signupWithVerificationCodeMutation_Mutation",
+            "variables": {
+                "emailAddress": address,
+                "phoneNumber": None,
+                "verificationCode": otp
+            },
+            "query": "mutation SignupOrLoginWithCodeSection_signupWithVerificationCodeMutation_Mutation(\n  $verificationCode: String!\n  $emailAddress: String\n  $phoneNumber: String\n) {\n  signupWithVerificationCode(verificationCode: $verificationCode, emailAddress: $emailAddress, phoneNumber: $phoneNumber) {\n    status\n    errorMessage\n  }\n}\n",
+        }
+        signup_confirmation2 = self.sess.post(f'https://{self.domain}/api/gql_POST', json=data1).json()
+        check_error(signup_confirmation2, 'signupWithVerificationCode')
         
-        # NOW VERIFY PHONE
-        self.sess.post(resp1_url, data={'strategy': 'phone_code'})  # prepare the request
-        resp2_url = f"https://clerk.{self.domain}/v1/client/sign_ups/{self.sua_id}/attempt_verification?_clerk_js_version=4.32.6"
-        while True:
-            code = input('> Please enter the One Time Verification code sent to your phone:\n').strip()
-            if not re.match(r'^\d{6}$', code):
-                print('> Invalid code format. Please try again.')
-                continue
-            resp2_data = {'code': code, 'strategy': 'phone_code'}
-            resp2 = self.sess.post(resp2_url, data=resp2_data)
-            resp2_json = resp2.json()
-            if check_error(resp2_json):
-                continue
-            break
-
-        logging.info("Retrieving JWT")
-        resp3 = self.sess.get(f"https://clerk.{self.domain}/v1/client?_clerk_js_version=4.32.6")
-        self.sess_id = resp3.json()['response']['sessions'][0]['id']
-        # self.sess.post(f"https://clerk.{self.domain}/v1/client/sessions/{self.sess_id}/touch?_clerk_js_version=4.32.6")
-        # resp3 = self.sess.get(f"https://clerk.{self.domain}/v1/client?_clerk_js_version=4.32.6")
-        # jwt = resp3.json()['response']['sessions'][0]['last_active_token']['jwt']
-        # self.sess.cookies.set('_session', jwt)
-
-        self.refresh_jwt()
+        # Save "p-b" cookie to token
+        token = self.sess.cookies.get('p-b')
         
-        with open('session_id.json', 'w') as f:
+        logger.info(f"Saving token to file: {token}")
+        
+        with open('poe_token.json', 'w') as f:
             f.write(json.dumps({
-                'sua_id': self.sua_id,
-                'sess_id': self.sess_id,
+                'token': token,
             }))
-        return self.sua_id, self.sess_id
-
-    def refresh_jwt(self):
-        with Lock():
-            logging.info('Refreshing JWT')
-            if 'Authorization' in self.sess.headers:
-                del self.sess.headers['Authorization']
-            url = f"https://clerk.{self.domain}/v1/client/sessions/{self.sess_id}/tokens?_clerk_js_version=4.32.6"
-            resp = self.sess.post(url)
-            jwt = resp.json()['jwt']
-            self.sess.headers['Authorization'] = f"Bearer {jwt}"
-            self.sess.cookies.set('_session', jwt)
-            self.save_cookies()
-
-    def save_cookies(self):
-        # save cookies to file
-        with open('pickle.bin', 'wb') as f:
-            pickle.dump(self.sess.cookies, f)
+        
+        logger.info("Success!")
+        return token
 
     def get(self, prompt):
-        # model_default = self.sess.get(f"https://{self.domain}/api/all_models").json()["anthropic:claude-instant-v1.0"]
-        data = {
-            "prompt": prompt,
-            "models": [{
-                "name": "anthropic:claude-instant-v1.0",
-                "enabled": True,
-                "selected": True,
-                "provider": "anthropic",
-                "tag": "anthropic:claude-instant-v1.0",
-                "parameters": {
-                    "temperature": 1,
-                    "maximumLength": 200,
-                    "topP": 1,
-                    "topK": 1,
-                    "presencePenalty": 1,
-                    "frequencyPenalty": 1,
-                    "stopSequences": []
-                }
-            }]
-        }
-        resp = self.sess.post(f"https://{self.domain}/api/stream", json=data, stream=True)
-        status_event = False
-        first_message = True
-        for line in resp.iter_lines():
-            line = line.decode()
-            if line.startswith('event:'):
-                status_event = line[6:] == 'status'
-            elif status_event:
-                continue
-            elif line.startswith('data:'):
-                data = json.loads(line[5:])
-                if first_message or last_message.endswith(': '):  # remove leading whitespace
-                    data['message'] = data['message'].lstrip()
-                    first_message = False
-                yield data['message']
-                last_message = data['message']
-
+        # {'capybara': 'Sage', 'beaver': 'GPT-4', 'a2_2': 'Claude+', 'a2': 'Claude-instant', 'chinchilla': 'ChatGPT', 'nutria': 'Dragonfly'}
+        self.poe_queue_in.put(prompt)
+        
+        while (data := self.poe_queue_out.get()) is not None:
+            yield data
 
 
 if __name__ == '__main__':
-    chatgpt = NatScraper()
+    chatgpt = PoeScraper()
     thread = chatgpt.async_start()
     thread.join()
     prompt = ''
@@ -272,5 +236,5 @@ if __name__ == '__main__':
             prompt += '\n\n'
             print('')
     except KeyboardInterrupt:
-        logging.info('Exiting')
+        logger.info('Exiting')
         exit()
