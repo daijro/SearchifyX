@@ -104,9 +104,9 @@ _web_engines = {
         'start_sess': True,
     },
     'duckduckgo': {
-        'domain': 'https://ddg-webapp-aagd.vercel.app/',
-        'query': 'q',
-        'args': {'max_results': '10'},
+        'domain': 'https://ddg-api.herokuapp.com/',
+        'query': 'query',
+        'args': {'limit': '10'},
         'limit': 490,
         'start_sess': False,
     }
@@ -266,7 +266,7 @@ class QuizletScraper:
         self.resps = None
         self.quizlets = []
         self.query = query
-        self._regex_obj = re.compile(r'(\\?)"termIdToTermsMap\\?":({.*}),\\?"termSort\\?"')
+        self._regex_obj = re.compile(r'(\\?)"termIdToTermsMap\\?":({.*?}),\\?"termSort\\?"')
 
     def async_requests(self, links):
         reqs = [grequests.get(u, headers=_make_headers()) for u in links]
