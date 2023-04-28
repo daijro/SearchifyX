@@ -87,7 +87,7 @@ class PoeAccountGenerator:
         logger.info("Registering email...")
         emailnator = Emailnator()
         address = emailnator.get_address()
-        logger.info(f"Email Adress: {address}")
+        logger.info(f"Email Address: {address}")
         self.email_queue.put(address)
         # start listening
         otp = emailnator.get_verification_code()
@@ -195,14 +195,16 @@ class PoeScraper(FlashcardGPT):
 
 
 class Emailnator:
+    domain = b64decode("d3d3LmVtYWlsbmF0b3IuY29t").decode()
+
     def __init__(self):
         self.client = Session()
-        self.client.get("https://www.emailnator.com/", timeout=6)
+        self.client.get(f"https://{self.domain}/", timeout=6)
         self.cookies = self.client.cookies.get_dict()
         self.client.headers = {
-            "authority": "www.emailnator.com",
-            "origin": "https://www.emailnator.com",
-            "referer": "https://www.emailnator.com/",
+            "authority": self.domain,
+            "origin": f"https://{self.domain}",
+            "referer": f"https://{self.domain}/",
             "user-agent": Headers().generate()['User-Agent'],
             "x-xsrf-token": self.client.cookies.get("XSRF-TOKEN")[:-3] + "=",
         }
@@ -210,7 +212,7 @@ class Emailnator:
 
     def get_address(self):
         resp = self.client.post(
-            "https://www.emailnator.com/generate-email",
+            f"https://{self.domain}/generate-email",
             json={
                 "email": ["plusGmail", "dotGmail"]
             },
@@ -222,13 +224,13 @@ class Emailnator:
         while True:
             time.sleep(1.5)
             mail_token = self.client.post(
-                "https://www.emailnator.com/message-list", json={"email": self.email}
+                f"https://{self.domain}/message-list", json={"email": self.email}
             )
             mail_token = mail_token.json()["messageData"]
             if len(mail_token) == 2:
                 break
         mail_context = self.client.post(
-            "https://www.emailnator.com/message-list",
+            f"https://{self.domain}/message-list",
             json={
                 "email": self.email,
                 "messageID": mail_token[1]["messageID"],
@@ -244,7 +246,7 @@ class Emailnator:
 
     def clear_inbox(self):
         self.client.post(
-            "https://www.emailnator.com/delete-all",
+            f"https://{self.domain}/delete-all",
             json={"email": self.email},
         )
 

@@ -24,7 +24,7 @@ orjson==3.8.6
 packaging==22.0
 parse==1.19.0
 Pillow==9.3.0
-poe-api==0.2.4
+poe-api
 pycparser==2.21
 pyee==8.2.2
 pyperclip==1.8.2
