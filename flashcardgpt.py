@@ -29,7 +29,7 @@ poe.logger.setLevel(logging.WARNING)
 class FlashcardGPT:    
     prompt = "Instuctions: You are now FlashcardGPT. A student queries a quiz question into the web search. Using the " \
              "provided data from FlashcardSearch, which flashcard most likely answers to the student's query? Return the most frequent " \
-             "and similar answer.\n\nStart with \"Best Answer:\", and briefly explain how the answer is correct. " \
+             "and similar answer.\n\nStart with \"Best Answer:\", and briefly explain how the answer is correct. Keep responses short." \
              "Example:\n\nBest Answer: X\nExplanation: ...\n\n" \
              "Query: {query}\n\nData collected from FlashcardSearch, a web scraper that searches the internet for flashcards:\n{data}\n\n" \
     
@@ -185,7 +185,6 @@ class PoeScraper(FlashcardGPT):
                 token = json.load(f)['token']
             return token
 
-
     def get(self, prompt):
         # {'capybara': 'Sage', 'beaver': 'GPT-4', 'a2_2': 'Claude+', 'a2': 'Claude-instant', 'chinchilla': 'ChatGPT', 'nutria': 'Dragonfly'}
         self.poe_queue_in.put(prompt)
@@ -253,7 +252,6 @@ class Emailnator:
     def __del__(self):
         if self.email:
             self.clear_inbox()
-
 
 
 if __name__ == '__main__':

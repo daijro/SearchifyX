@@ -80,7 +80,11 @@ sluggify  = lambda a: ' '.join(a.lower().split())
 remove_duplicates = lambda a: list(set(a))
 
 def _make_headers():
-    return {**headers, **Headers(headers=True, browser='chrome', os='windows').generate()}
+    return {
+        **headers,
+        **Headers(headers=True, browser='chrome', os='windows').generate(),
+        'Accept-Encoding': 'gzip, deflate'
+    }
 
 
 _web_engines = {
@@ -175,6 +179,7 @@ class SearchEngine:
             ], size=len(sites))
         ))
 
+
 class SearchWeb:
     """
     search web for query
@@ -223,7 +228,6 @@ class QuizizzScraper:
                 logger.info(f'Quizizz exception: {e} {resp.url}')
         return self.quizizzs
 
-
     def quizizz_parser(self, link, resp):
         data = orjson.loads(resp.content)['data']['quiz']['info']
         return [
@@ -259,7 +263,6 @@ class QuizizzScraper:
         ]
 
 
-
 class QuizletScraper:
     def __init__(self, links, query):
         self.links = links
@@ -280,7 +283,6 @@ class QuizletScraper:
             except Exception as e:
                 logger.info(f'Quizlet exception: {e} {resp.url}')
         return self.quizlets
-
 
     def quizlet_parser(self, link, resp):
         terms_match = re.search(self._regex_obj, resp.text)
@@ -336,7 +338,6 @@ class TimeLogger:
                 ])
             )
         print('TOTAL ELAPSED'.ljust(longest_len, " ") + ' \t= ' + str(round(time.time() - self.elapsed_total, 5)))
-
 
 
 class Searchify:
@@ -461,7 +462,7 @@ if __name__ == '__main__' and len(sys.argv) > 1:
     parser.add_argument('--query',  '-q', help='query to search for',  default=None)
     parser.add_argument('--output', '-o', help='output file',          default=None)
     parser.add_argument('--sites',  '-s', help='question sources quizlet,quizizz (comma seperated list)', default='quizlet,quizizz')
-    parser.add_argument('--engine', '-e', help='search engine to use', default='duckduckgo', choices=_web_engines.keys())
+    parser.add_argument('--engine', '-e', help='search engine to use', default='google', choices=_web_engines.keys())
     parser.add_argument('--chatgpt', '-gpt', help='summarize the results in ChatGPT (expiremental)', action='store_true')
     parser.add_argument('--search-db', '-db', help='search database n amount for flashcards. works offline', type=int, default=None)
     args = parser.parse_args()
@@ -508,10 +509,9 @@ if __name__ == '__main__' and len(sys.argv) > 1:
     
     # get best answer with chatgpt
     if args.chatgpt and s.flashcards:
-        print('\n--------------------\nCHATGPT SUMMARIZATION:')
+        print('\n' + '-' * 20 + '\nCHATGPT SUMMARIZATION:')
         s_thread.join()
         for chunk in chatgpt.run(args.query, s.flashcards[:10]):
             print(chunk, end='')
         print('')
-        # fix greenlet: WARNING: failed in call to Py_AddPendingCall; expect a memory leak.
         
