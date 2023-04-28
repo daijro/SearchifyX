@@ -478,8 +478,8 @@ if __name__ == '__main__' and len(sys.argv) > 1:
         exit()
     
     if args.chatgpt:
-        from flashcardgpt import PoeScraper
-        chatgpt = PoeScraper()
+        from flashcardgpt import FlashcardGPT
+        chatgpt = FlashcardGPT()
         s_thread = chatgpt.async_start()
 
     # main program

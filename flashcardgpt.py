@@ -26,33 +26,6 @@ logger.addHandler(ch)
 poe.logger.setLevel(logging.WARNING)
 
 
-class FlashcardGPT:    
-    prompt = "Instuctions: You are now FlashcardGPT. A student queries a quiz question into the web search. Using the " \
-             "provided data from FlashcardSearch, which flashcard most likely answers to the student's query? Return the most frequent " \
-             "and similar answer.\n\nStart with \"Best Answer:\", and briefly explain how the answer is correct. Keep responses short." \
-             "Example:\n\nBest Answer: X\nExplanation: ...\n\n" \
-             "Query: {query}\n\nData collected from FlashcardSearch, a web scraper that searches the internet for flashcards:\n{data}\n\n" \
-    
-    def format_cards(self, cards):
-        formatted_list = [
-            {
-                'Question': card['question'],
-                'Answer': card['answer'],
-                'Similarity': card['similarity'],
-            }
-            for card in cards
-        ]
-        return orjson.dumps(formatted_list, option=orjson.OPT_INDENT_2).decode()
-
-    def run(self, query, cards):
-        return self.get(
-            self.prompt.format(
-                query=query,
-                data=self.format_cards(cards)
-            )
-        )
-
-
 class PoeAPI:
     def __init__(self, queue_in, queue_out, token):
         self.queue_in = queue_in
@@ -147,52 +120,6 @@ class PoeAccountGenerator:
         return queue.get()
 
 
-class PoeScraper(FlashcardGPT):
-    headers = {
-        "Cache-Control": "max-age=0",
-        "Sec-Ch-Ua": "\"Not?A_Brand\";v=\"8\", \"Chromium\";v=\"108\"",
-        "Sec-Ch-Ua-Mobile": "?0",
-        "Sec-Ch-Ua-Platform": "\"Windows\"",
-        "Upgrade-Insecure-Requests": "1",
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.5359.125 Safari/537.36",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-        "Sec-Fetch-Site": "same-origin",
-        "Sec-Fetch-Mode": "navigate",
-        "Sec-Fetch-User": "?1",
-        "Sec-Fetch-Dest": "document",
-        "Accept-Encoding": "gzip, deflate",
-        "Accept-Language": "en-US,en;q=0.9"
-    }
-    
-    def start(self):
-        # Get previous session
-        if prev_sess := self.getSavedSession():
-            self.token = prev_sess
-            logger.info(f"Using saved session: {self.token}")
-        else:
-            self.token = PoeAccountGenerator().run()
-        self.poe_queue_in, self.poe_queue_out = Queue(), Queue()
-        Process(target=PoeAPI, args=(self.poe_queue_in, self.poe_queue_out, self.token), daemon=True).start()
-    
-    def async_start(self):
-        s_thread = Thread(target=self.start, daemon=True)
-        s_thread.start()
-        return s_thread
-    
-    def getSavedSession(self):
-        if os.path.exists("poe_token.json"):
-            with open("poe_token.json", "r") as f:
-                token = json.load(f)['token']
-            return token
-
-    def get(self, prompt):
-        # {'capybara': 'Sage', 'beaver': 'GPT-4', 'a2_2': 'Claude+', 'a2': 'Claude-instant', 'chinchilla': 'ChatGPT', 'nutria': 'Dragonfly'}
-        self.poe_queue_in.put(prompt)
-        
-        while (data := self.poe_queue_out.get()) is not None:
-            yield data
-
-
 class Emailnator:
     domain = b64decode("d3d3LmVtYWlsbmF0b3IuY29t").decode()
 
@@ -254,8 +181,81 @@ class Emailnator:
             self.clear_inbox()
 
 
+class PoeScraper:
+    headers = {
+        "Cache-Control": "max-age=0",
+        "Sec-Ch-Ua": "\"Not?A_Brand\";v=\"8\", \"Chromium\";v=\"108\"",
+        "Sec-Ch-Ua-Mobile": "?0",
+        "Sec-Ch-Ua-Platform": "\"Windows\"",
+        "Upgrade-Insecure-Requests": "1",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.5359.125 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+        "Sec-Fetch-Site": "same-origin",
+        "Sec-Fetch-Mode": "navigate",
+        "Sec-Fetch-User": "?1",
+        "Sec-Fetch-Dest": "document",
+        "Accept-Encoding": "gzip, deflate",
+        "Accept-Language": "en-US,en;q=0.9"
+    }
+    
+    def start(self):
+        # Get previous session
+        if prev_sess := self.getSavedSession():
+            self.token = prev_sess
+            logger.info(f"Using saved session: {self.token}")
+        else:
+            self.token = PoeAccountGenerator().run()
+        self.poe_queue_in, self.poe_queue_out = Queue(), Queue()
+        Process(target=PoeAPI, args=(self.poe_queue_in, self.poe_queue_out, self.token), daemon=True).start()
+    
+    def async_start(self):
+        s_thread = Thread(target=self.start, daemon=True)
+        s_thread.start()
+        return s_thread
+    
+    def getSavedSession(self):
+        if os.path.exists("poe_token.json"):
+            with open("poe_token.json", "r") as f:
+                token = json.load(f)['token']
+            return token
+
+    def get(self, prompt):
+        # {'capybara': 'Sage', 'beaver': 'GPT-4', 'a2_2': 'Claude+', 'a2': 'Claude-instant', 'chinchilla': 'ChatGPT', 'nutria': 'Dragonfly'}
+        self.poe_queue_in.put(prompt)
+        
+        while (data := self.poe_queue_out.get()) is not None:
+            yield data
+
+
+class FlashcardGPT(PoeScraper):    
+    prompt = "Instuctions: You are now FlashcardGPT. A student queries a quiz question into the web search. Using the " \
+             "provided data from FlashcardSearch, which flashcard most likely answers to the student's query? Return the most frequent " \
+             "and similar answer.\n\nStart with \"Best Answer:\", and briefly explain how the answer is correct. Keep responses short. " \
+             "Example:\n\nBest Answer: X\nExplanation: ...\n\n" \
+             "Query: {query}\n\nData collected from FlashcardSearch, a web scraper that searches the internet for flashcards:\n{data}\n\n" \
+    
+    def format_cards(self, cards):
+        formatted_list = [
+            {
+                'Question': card['question'],
+                'Answer': card['answer'],
+                'Similarity': card['similarity'],
+            }
+            for card in cards
+        ]
+        return orjson.dumps(formatted_list, option=orjson.OPT_INDENT_2).decode()
+
+    def run(self, query, cards):
+        return self.get(
+            self.prompt.format(
+                query=query,
+                data=self.format_cards(cards)
+            )
+        )
+
+
 if __name__ == '__main__':
-    chatgpt = PoeScraper()
+    chatgpt = FlashcardGPT()
     thread = chatgpt.async_start()
     thread.join()
     prompt = ''
