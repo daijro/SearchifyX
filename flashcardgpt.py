@@ -5,12 +5,14 @@ from multiprocessing import Queue, Process
 import re
 import json
 from threading import Thread
-from mailtm import Email
 import os
 import logging
-from bs4 import BeautifulSoup, SoupStrainer
 from base64 import b64decode
 import poe
+import asyncio
+from pyppeteer import launch
+from fake_headers import Headers
+import time
 
 
 # logging
@@ -30,9 +32,6 @@ class FlashcardGPT:
              "and similar answer.\n\nStart with \"Best Answer:\", and briefly explain how the answer is correct. " \
              "Example:\n\nBest Answer: X\nExplanation: ...\n\n" \
              "Query: {query}\n\nData collected from FlashcardSearch, a web scraper that searches the internet for flashcards:\n{data}\n\n" \
-    
-    def __init__(self):
-        self.sess = Session()
     
     def format_cards(self, cards):
         formatted_list = [
@@ -81,8 +80,74 @@ class PoeAPI:
         yield None
 
 
-class PoeScraper(FlashcardGPT):
+class PoeAccountGenerator:
     domain = b64decode('cG9lLmNvbQ==').decode()
+
+    def verifyEmailListener(self):
+        logger.info("Registering email...")
+        emailnator = Emailnator()
+        address = emailnator.get_address()
+        logger.info(f"Email Adress: {address}")
+        self.email_queue.put(address)
+        # start listening
+        otp = emailnator.get_verification_code()
+        logger.info(f"Verification Code: {otp}")
+        self.email_queue.put(otp)
+        del emailnator  # cleanup
+        
+    async def registerAccount(self):
+        self.email_queue = Queue()
+        Thread(target=self.verifyEmailListener, daemon=True).start()
+
+        logger.info("Launching browser...")
+        browser = await launch(options={'args': ['--no-sandbox']})
+        page = (await browser.pages())[0]
+        
+        await page.goto(f'https://{self.domain}/login')
+        # Click "Use email"
+        flat_btn = 'button.Button_flat__1hj0f.undefined'
+        prim_btn = 'button.Button_primary__pIDjn.undefined'
+        await page.waitForSelector(flat_btn)
+        await page.click(flat_btn)
+        # Enter email and press Go
+        await page.type('input[type=email]', self.email_queue.get())
+        await page.click('button.Button_primary__pIDjn.undefined')
+        # Enter verification code
+        verif_inp = 'input.VerificationCodeInput_verificationCodeInput__YD3KV'
+        await page.waitForSelector(verif_inp)
+        logger.info("Waiting for verification code...")
+        await page.type(verif_inp, self.email_queue.get())
+        await page.click(prim_btn)  # login
+        # Wait for navigation, save "p-b" cookie
+        await page.waitForNavigation()
+        cookies = await page.cookies()
+        # Find p-b cookie
+        for cookie in cookies:
+            if cookie['name'] == 'p-b':
+                token = cookie['value']
+                break
+        else:
+            raise Exception("Could not find p-b cookie")
+        logger.info(f"Saving token to file: {token}")
+        
+        with open('poe_token.json', 'w') as f:
+            f.write(json.dumps({
+                'token': token,
+            }))
+        logger.info("Success!")
+        return token
+
+    def runEventLoop(self, out: Queue):
+        token = asyncio.get_event_loop().run_until_complete(self.registerAccount())
+        out.put(token)
+
+    def run(self):
+        queue = Queue(maxsize=1)
+        Process(target=self.runEventLoop, args=(queue,), daemon=True).start()
+        return queue.get()
+
+
+class PoeScraper(FlashcardGPT):
     headers = {
         "Cache-Control": "max-age=0",
         "Sec-Ch-Ua": "\"Not?A_Brand\";v=\"8\", \"Chromium\";v=\"108\"",
@@ -100,13 +165,12 @@ class PoeScraper(FlashcardGPT):
     }
     
     def start(self):
-        self.sess.headers.update(self.headers)
         # Get previous session
         if prev_sess := self.getSavedSession():
             self.token = prev_sess
             logger.info(f"Using saved session: {self.token}")
         else:
-            self.token = self.registerAccount()
+            self.token = PoeAccountGenerator().run()
         self.poe_queue_in, self.poe_queue_out = Queue(), Queue()
         Process(target=PoeAPI, args=(self.poe_queue_in, self.poe_queue_out, self.token), daemon=True).start()
     
@@ -121,97 +185,6 @@ class PoeScraper(FlashcardGPT):
                 token = json.load(f)['token']
             return token
 
-    def verifyEmailListener(self):
-        listen_queue = Queue()
-        def listener(message):
-            html = message['html'][0]
-            soup = BeautifulSoup(html, 'lxml', parse_only=SoupStrainer('table'))
-            code = re.search(r'\d+', soup.text)[0]
-            listen_queue.put(code)
-
-        logger.info("Registering email")
-        # Get Domains
-        test = Email()
-
-        # Make new email address
-        test.register()
-        logger.info(f"Email Adress: {str(test.address)}")
-        self.email_queue.put(test.address)
-
-        # Start listening
-        test.start(listener)
-        self.email_queue.put(listen_queue.get())
-        test.stop(); exit()  # Stop listening
-        
-    def registerAccount(self):
-        self.email_queue = Queue()
-        Process(target=self.verifyEmailListener, daemon=True).start()
-
-        # Fetching settings
-        logger.info("Starting session")
-        self.sess.get(f'https://{self.domain}/login')
-        # Update headers for internal api access
-        self.sess.headers.update({
-            "Accept": "*/*",
-            "Sec-Fetch-Mode": "cors",
-            "Sec-Fetch-Dest": "empty",
-            "Referer": f"https://{self.domain}/login",
-        })
-        # Getting api settings
-        logger.info("Getting API settings")
-        api_settings = self.sess.get(f'https://{self.domain}/api/settings').json()
-        self.sess.headers.update({
-            'Content-Type': 'application/json',
-            'Poe-Formkey': api_settings['formkey'],
-            'Poe-Tchannel': api_settings['tchannelData']['channel'],
-        })
-        
-        def check_error(resp_data, data_name):
-            if resp_data['data'][data_name].get('errorMessage'):
-                logging.error(f"Error: {resp_data['data']['sendVerificationCode']['errorMessage']}")
-                exit()
-        
-        # Send confirmation email
-        logger.info("Sending confirmation email")
-        address = self.email_queue.get()
-        data0 = {
-            "queryName": "MainSignupLoginSection_sendVerificationCodeMutation_Mutation",
-            "variables": {
-                "emailAddress": address,
-                "phoneNumber": None
-            },
-            "query": "mutation MainSignupLoginSection_sendVerificationCodeMutation_Mutation(\n  $emailAddress: String\n  $phoneNumber: String\n) {\n  sendVerificationCode(verificationReason: login, emailAddress: $emailAddress, phoneNumber: $phoneNumber) {\n    status\n    errorMessage\n  }\n}\n"
-        }
-        signup_confirmation1 = self.sess.post(f'https://{self.domain}/api/gql_POST', json=data0).json()
-        check_error(signup_confirmation1, 'sendVerificationCode')
-            
-        # Verifying email
-        otp = self.email_queue.get()
-        logger.info(f"Found verification code: {otp}")
-        data1 = {
-            "queryName": "SignupOrLoginWithCodeSection_signupWithVerificationCodeMutation_Mutation",
-            "variables": {
-                "emailAddress": address,
-                "phoneNumber": None,
-                "verificationCode": otp
-            },
-            "query": "mutation SignupOrLoginWithCodeSection_signupWithVerificationCodeMutation_Mutation(\n  $verificationCode: String!\n  $emailAddress: String\n  $phoneNumber: String\n) {\n  signupWithVerificationCode(verificationCode: $verificationCode, emailAddress: $emailAddress, phoneNumber: $phoneNumber) {\n    status\n    errorMessage\n  }\n}\n",
-        }
-        signup_confirmation2 = self.sess.post(f'https://{self.domain}/api/gql_POST', json=data1).json()
-        check_error(signup_confirmation2, 'signupWithVerificationCode')
-        
-        # Save "p-b" cookie to token
-        token = self.sess.cookies.get('p-b')
-        
-        logger.info(f"Saving token to file: {token}")
-        
-        with open('poe_token.json', 'w') as f:
-            f.write(json.dumps({
-                'token': token,
-            }))
-        
-        logger.info("Success!")
-        return token
 
     def get(self, prompt):
         # {'capybara': 'Sage', 'beaver': 'GPT-4', 'a2_2': 'Claude+', 'a2': 'Claude-instant', 'chinchilla': 'ChatGPT', 'nutria': 'Dragonfly'}
@@ -219,6 +192,66 @@ class PoeScraper(FlashcardGPT):
         
         while (data := self.poe_queue_out.get()) is not None:
             yield data
+
+
+class Emailnator:
+    def __init__(self):
+        self.client = Session()
+        self.client.get("https://www.emailnator.com/", timeout=6)
+        self.cookies = self.client.cookies.get_dict()
+        self.client.headers = {
+            "authority": "www.emailnator.com",
+            "origin": "https://www.emailnator.com",
+            "referer": "https://www.emailnator.com/",
+            "user-agent": Headers().generate()['User-Agent'],
+            "x-xsrf-token": self.client.cookies.get("XSRF-TOKEN")[:-3] + "=",
+        }
+        self.email = None
+
+    def get_address(self):
+        resp = self.client.post(
+            "https://www.emailnator.com/generate-email",
+            json={
+                "email": ["plusGmail", "dotGmail"]
+            },
+        )
+        self.email = resp.json()["email"][0]
+        return self.email
+
+    def get_message(self):
+        while True:
+            time.sleep(1.5)
+            mail_token = self.client.post(
+                "https://www.emailnator.com/message-list", json={"email": self.email}
+            )
+            mail_token = mail_token.json()["messageData"]
+            if len(mail_token) == 2:
+                break
+        mail_context = self.client.post(
+            "https://www.emailnator.com/message-list",
+            json={
+                "email": self.email,
+                "messageID": mail_token[1]["messageID"],
+            },
+        )
+        return mail_context.text
+
+    def get_verification_code(self):
+        message = self.get_message()
+        code = re.findall(r';">(\d{6,7})</div>', message)[0]
+        logging.info(f"Verification code: {code}")
+        return code
+
+    def clear_inbox(self):
+        self.client.post(
+            "https://www.emailnator.com/delete-all",
+            json={"email": self.email},
+        )
+
+    def __del__(self):
+        if self.email:
+            self.clear_inbox()
+
 
 
 if __name__ == '__main__':
