@@ -101,6 +101,7 @@ class PoeAccountGenerator:
                 break
         else:
             raise Exception("Could not find p-b cookie")
+        await browser.close()
         logger.info(f"Saving token to file: {token}")
         
         with open('poe_token.json', 'w') as f:
