@@ -31,6 +31,7 @@ class PoeAPI:
         self.queue_in = queue_in
         self.queue_out = queue_out
         self.client = poe.Client(token)
+        self.client.send_chat_break('a2')  # clear context
         self.manager()
     
     def manager(self):
@@ -43,7 +44,7 @@ class PoeAPI:
         logger.info('Loading result from claude-instant-v1.0 api')
         first_message = True
         full_message = ''
-        for chunk in self.client.send_message("a2", prompt):
+        for chunk in self.client.send_message('a2', prompt):
             if first_message or full_message.endswith(': '):  # remove leading whitespace
                 chunk["text_new"] = chunk["text_new"].lstrip()
                 first_message = False
