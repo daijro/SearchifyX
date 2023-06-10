@@ -11,7 +11,7 @@ fake-headers==1.0.2
 fake-useragent==1.1.1
 gevent==22.10.2
 greenlet==2.0.1
-grequests==0.6.0
+grequests==0.7.0
 html5lib==1.1
 idna==3.4
 importlib-metadata==5.2.0

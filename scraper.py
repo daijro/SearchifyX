@@ -1,20 +1,23 @@
 if __name__ != '__mp_main__':
     import grequests  # gevent patching causes issues with mailtm
-    import orjson
-    from bs4 import BeautifulSoup
-    from requests_html import HTMLSession
-    from fake_headers import Headers
-    import re
-    import os
-    import sys
-    import time
-    from random import choice
-    from urllib.parse import urlencode
-    from threading import Thread
-    import sqlite3
-    from jellyfish import jaro_distance as similar
-    from itertools import chain
+
 import logging
+import os
+import re
+import sqlite3
+import sys
+import time
+from itertools import chain
+from random import choice
+from threading import Thread
+from urllib.parse import urlencode
+
+import orjson
+import tls_client
+from bs4 import BeautifulSoup
+from fake_headers import Headers
+from jellyfish import jaro_distance as similar
+from requests import Session
 
 # set logger
 logger = logging.getLogger(__name__)
@@ -49,35 +52,18 @@ headers = {
     "Connection": "close"
 }
 
-google_domains = (
-    'com', 'ad', 'ae', 'com.af', 'com.ag', 'com.ai', 'al', 'am',
-    'co.ao', 'com.ar', 'as', 'at', 'com.au', 'az', 'ba', 'com.bd',
-    'be', 'bf', 'bg', 'com.bh', 'bi', 'bj', 'com.bn', 'com.bo',
-    'com.br', 'bs', 'bt', 'co.bw', 'by', 'com.bz', 'ca', 'cd', 'cf',
-    'cg', 'ch', 'ci', 'co.ck', 'cl', 'cm', 'cn', 'com.co', 'co.cr',
-    'com.cu', 'cv', 'com.cy', 'cz', 'de', 'dj', 'dk', 'dm', 'com.do',
-    'dz', 'com.ec', 'ee', 'com.eg', 'es', 'com.et', 'fi', 'com.fj',
-    'fm', 'fr', 'ga', 'ge', 'gg', 'com.gh', 'com.gi', 'gl', 'gm',
-    'gr', 'com.gt', 'gy', 'com.hk', 'hn', 'hr', 'ht', 'hu', 'co.id',
-    'ie', 'co.il', 'im', 'co.in', 'iq', 'is', 'it', 'je', 'com.jm',
-    'jo', 'co.jp', 'co.ke', 'com.kh', 'ki', 'kg', 'co.kr', 'com.kw',
-    'kz', 'la', 'com.lb', 'li', 'lk', 'co.ls', 'lt', 'lu', 'lv',
-    'com.ly', 'co.ma', 'md', 'me', 'mg', 'mk', 'ml', 'com.mm', 'mn',
-    'ms', 'com.mt', 'mu', 'mv', 'mw', 'com.mx', 'com.my', 'co.mz',
-    'com.na', 'com.ng', 'com.ni', 'ne', 'nl', 'no', 'com.np', 'nr',
-    'nu', 'co.nz', 'com.om', 'com.pa', 'com.pe', 'com.pg', 'com.ph',
-    'com.pk', 'pl', 'pn', 'com.pr', 'ps', 'pt', 'com.py', 'com.qa',
-    'ro', 'ru', 'rw', 'com.sa', 'com.sb', 'sc', 'se', 'com.sg', 'sh',
-    'si', 'sk', 'com.sl', 'sn', 'so', 'sm', 'sr', 'st', 'com.sv',
-    'td', 'tg', 'co.th', 'com.tj', 'tl', 'tm', 'tn', 'to', 'com.tr', 
-    'tt', 'com.tw', 'co.tz', 'com.ua', 'co.ug', 'co.uk', 'com.uy',
-    'co.uz', 'com.vc', 'co.ve', 'vg', 'co.vi', 'com.vn', 'vu', 'ws',
-    'rs', 'co.za', 'co.zm', 'co.zw', 'cat'
-)
+google_domains = tuple(orjson.loads(open(resource_path('domains.json'), 'r').read()))
 
-get_text  = lambda x: BeautifulSoup(x, features='lxml').get_text().strip()
-sluggify  = lambda a: ' '.join(a.lower().split())
-remove_duplicates = lambda a: list(set(a))
+
+class _Utils:
+    @staticmethod
+    def get_text(s):
+        return BeautifulSoup(s, features='lxml').get_text().strip()
+
+    @staticmethod
+    def remove_duplicates(a):
+        return list(set(a))
+
 
 def _make_headers():
     return {
@@ -93,39 +79,54 @@ _web_engines = {
         'query': 'q',
         'args': {'aqs': 'chrome..69i57.888j0j1', 'sourceid': 'chrome', 'ie': 'UTF-8'},
         'limit': 2038,
-        'start_sess': False,
+        'start_sess': False
     },
     'bing': {
         'domain': 'https://www.bing.com/',
         'query': 'q',
         'args': {'lq': '0', 'ghsh': '0', 'ghacc': '0', 'ghpl': ''},
         'limit': 990,
-        'start_sess': True,
+        'start_sess': True
     },
     'startpage': {
         'domain': 'https://www.startpage.com/',
         'limit': 2038,
-        'start_sess': True,
+        'start_sess': True
     },
     'duckduckgo': {
         'domain': 'https://ddg-api.herokuapp.com/',
         'query': 'query',
         'args': {'limit': '10'},
         'limit': 490,
-        'start_sess': False,
+        'start_sess': False
     }
 }
 
+
+class GreqTlsWrapper(tls_client.Session):
+    # wrapper around tls_client to work with grequests
+    def __init__(self):
+        super().__init__(client_identifier='firefox110', random_tls_extension_order=True)
+
+    def request(self, *args, **kwargs):
+        kwargs.pop('stream', None)  # remove "stream" argument
+        return self.execute_request(*args, **kwargs, allow_redirects=True)
+
+
 class SearchEngine:
     def __init__(self, engine_name):
-        self.sess = HTMLSession()
+        self.sess = Session()
         self.engine_name = engine_name
-        self.sess.headers.update({**headers, "Sec-Fetch-Site": "same-origin", 'Referer': _web_engines[self.engine_name]['domain']})
+        self.sess.headers.update({
+            **headers,
+            "Sec-Fetch-Site": "same-origin",
+            'Referer': _web_engines[self.engine_name]['domain'],
+        })
         logger.info('Starting instance...')
         self.t = Thread(target=self._init_search)
         self.t.daemon = True
         self.t.start()
-        
+
     def _init_search(self):
         if not _web_engines[self.engine_name]['start_sess']:
             return
@@ -202,7 +203,7 @@ class SearchWeb:
         if None in resps.values():
             raise Exception('Error searching web')
         self.links = {
-            site: remove_duplicates(re.findall(self._regex_objs[site], resps[site].text))
+            site: _Utils.remove_duplicates(re.findall(self._regex_objs[site], resps[site].text))
             for site in self.sites
         }
         
@@ -210,76 +211,82 @@ class SearchWeb:
 class QuizizzScraper:
     def __init__(self, links, query):
         self.links = links
-        self.resps = None
         self.quizizzs = []
         self.query = query
     
-    def async_requests(self, links):
+    def async_requests(self):
+        links = ['https://quizizz.com/quiz/' + u.split('/')[-2] for u in self.links]
         reqs = [grequests.get(u, headers=_make_headers()) for u in links]
-        self.resps = grequests.map(reqs, size=len(reqs))
+        return grequests.imap_enumerated(reqs, size=len(reqs))
 
     def parse_links(self):
-        links = ['https://quizizz.com/quiz/' + u.split('/')[-2] for u in self.links]
-        self.async_requests(links)
-        for link, resp in zip(self.links, self.resps):
+        resps = self.async_requests()
+        for index, resp in resps:
             try:
-                self.quizizzs.append(self.quizizz_parser(link, resp))
+                self.quizizzs.append(self.quizizz_parser(self.links[index], resp))
             except Exception as e:
                 logger.info(f'Quizizz exception: {e} {resp.url}')
         return self.quizizzs
 
+    def _get_answer(self, ans_item):
+        answer = None
+        if ans_item["text"]:
+            answer = _Utils.get_text(ans_item["text"])
+        elif not answer and ans_item.get("media"):
+            answer = ans_item["media"][0]["url"]
+        return answer
+
     def quizizz_parser(self, link, resp):
         data = orjson.loads(resp.content)['data']['quiz']['info']
-        return [
-            {
+        questions = []
+        for x in data["questions"]:
+            if "query" not in x["structure"]:
+                return questions
+            questr = _Utils.get_text(x["structure"]["query"]["text"])
+            question = x["structure"]
+            if question["kind"] == "MCQ":
+                ans_item = question["options"][int(question["answer"])]
+                answer = self._get_answer(ans_item)
+            elif question["kind"] == "MSQ":
+                answers = []
+                for answerC in question["answer"]:
+                    ans_item = question["options"][int(answerC)]
+                    answers.append(self._get_answer(ans_item))
+                answer = ', '.join(answers)
+            else:
+                answer = "None"
+            questions.append({
                 'question': questr,
-                'answer': get_text(
-                    question["structure"]["options"][
-                        int(question["structure"]["answer"])
-                    ]["text"]
-                )
-                or question["structure"]["options"][
-                    int(question["structure"]["answer"])
-                ]["media"][0]["url"]
-                if question["type"] == "MCQ"
-                else ', '.join(
-                    [
-                        get_text(
-                            question["structure"]["options"][int(answerC)]["text"]
-                        )
-                        or question["structure"]["options"][int(answerC)]["media"][0]["url"]
-                        for answerC in question["structure"]["answer"]
-                    ]
-                )
-                if question["type"] == "MSQ"
-                else None,
+                'answer': answer,
                 'similarity': (similar(questr, self.query), True),
                 'url': link,
-            }
-            for questr, question in [
-                (get_text(x["structure"]["query"]["text"]), x)
-                for x in data["questions"]
-            ]
-        ]
+            })
+        return questions
 
 
 class QuizletScraper:
     def __init__(self, links, query):
         self.links = links
-        self.resps = None
         self.quizlets = []
         self.query = query
+        self.session = GreqTlsWrapper()
         self._regex_obj = re.compile(r'(\\?)"termIdToTermsMap\\?":({.*?}),\\?"termSort\\?"')
 
-    def async_requests(self, links):
-        reqs = [grequests.get(u, headers=_make_headers()) for u in links]
-        self.resps = grequests.map(reqs, size=len(reqs))
+    def async_requests(self):
+        reqs = [
+            grequests.get(
+                u,
+                headers=_make_headers(),
+                session=self.session
+            ) for u in self.links
+        ]
+        return grequests.imap_enumerated(reqs, size=len(reqs))
 
     def parse_links(self):
-        self.async_requests(self.links)
-        for link, resp in zip(self.links, self.resps):
+        resps = self.async_requests()
+        for index, resp in resps:
             try:
-                self.quizlets.append(self.quizlet_parser(link, resp))
+                self.quizlets.append(self.quizlet_parser(self.links[index], resp))
             except Exception as e:
                 logger.info(f'Quizlet exception: {e} {resp.url}')
         return self.quizlets
@@ -383,7 +390,7 @@ class Searchify:
 
         for n, T in enumerate(threads):
             T.join()
-            logger.info(f'Thread {n} finished')
+            logger.info(f'Thread finished ({n+1}/2)')
 
         self.sort_flashcards()
         self.stop_time = time.time() - self.timer.elapsed_total
@@ -452,7 +459,6 @@ class Searchify:
                 self.flashcards[card]['answer'],    self.flashcards[card]['question']   )
 
             self.flashcards[card]['similarity'] = str(round(self.flashcards[card]['similarity'][0] * 100, 2)) + '%'
-
 
 
 if __name__ == '__main__' and len(sys.argv) > 1:

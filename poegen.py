@@ -54,7 +54,7 @@ class PoeAccountGenerator:
         Thread(target=self.verifyEmailListener, daemon=True).start()
 
         logging.info("Launching browser...")
-        browser = playwright.chromium.launch(headless=True)
+        browser = playwright.firefox.launch(headless=True)
         context = browser.new_context()
         page = context.new_page()
         page.goto(f'https://{self.domain}/login')
