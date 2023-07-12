@@ -1,12 +1,10 @@
 import logging
 import orjson
 from multiprocessing import Queue, Process
-import json
 from threading import Thread
-import os
 import logging
 import poe
-from poegen import PoeAccountGenerator
+from .poegen import PoeAccountGenerator
 
 
 # logging

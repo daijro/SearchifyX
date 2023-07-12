@@ -1,23 +1,18 @@
-if __name__ != '__mp_main__':
-    import grequests  # gevent patching causes issues with mailtm
-
 import logging
 import os
 import re
 import sqlite3
 import sys
 import time
+from contextlib import suppress
 from itertools import chain
 from random import choice
 from threading import Thread
-from urllib.parse import urlencode
 
+import hrequests
 import orjson
-import tls_client
-from bs4 import BeautifulSoup
-from fake_headers import Headers
+from bs4 import BeautifulSoup, MarkupResemblesLocatorWarning
 from jellyfish import jaro_distance as similar
-from requests import Session
 
 # set logger
 logger = logging.getLogger(__name__)
@@ -35,42 +30,18 @@ def resource_path(relative_path):
         base_path = os.path.dirname(__file__)
     return os.path.join(base_path, relative_path)
 
-
-headers = {
-    "Sec-Ch-Ua": "\"(Not(A:Brand\";v=\"8\", \"Chromium\";v=\"99\"",
-    "Sec-Ch-Ua-Mobile": "?0",
-    "Sec-Ch-Ua-Platform": "\"Windows\"",
-    "Upgrade-Insecure-Requests": "1",
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.74 Safari/537.36",
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-    "Sec-Fetch-Site": "none",
-    "Sec-Fetch-Mode": "navigate",
-    "Sec-Fetch-User": "?1",
-    "Sec-Fetch-Dest": "document",
-    "Accept-Encoding": "gzip, deflate",
-    "Accept-Language": "en-US,en;q=0.9",
-    "Connection": "close"
-}
-
 google_domains = tuple(orjson.loads(open(resource_path('domains.json'), 'r').read()))
 
 
 class _Utils:
     @staticmethod
     def get_text(s):
-        return BeautifulSoup(s, features='lxml').get_text().strip()
+        with suppress(MarkupResemblesLocatorWarning):
+            return BeautifulSoup(s, features='lxml').get_text().strip()
 
     @staticmethod
     def remove_duplicates(a):
         return list(set(a))
-
-
-def _make_headers():
-    return {
-        **headers,
-        **Headers(headers=True, browser='chrome', os='windows').generate(),
-        'Accept-Encoding': 'gzip, deflate'
-    }
 
 
 _web_engines = {
@@ -79,6 +50,7 @@ _web_engines = {
         'query': 'q',
         'args': {'aqs': 'chrome..69i57.888j0j1', 'sourceid': 'chrome', 'ie': 'UTF-8'},
         'limit': 2038,
+        'verify': False,
         'start_sess': False
     },
     'bing': {
@@ -86,11 +58,7 @@ _web_engines = {
         'query': 'q',
         'args': {'lq': '0', 'ghsh': '0', 'ghacc': '0', 'ghpl': ''},
         'limit': 990,
-        'start_sess': True
-    },
-    'startpage': {
-        'domain': 'https://www.startpage.com/',
-        'limit': 2038,
+        'verify': True,
         'start_sess': True
     },
     'duckduckgo': {
@@ -98,83 +66,47 @@ _web_engines = {
         'query': 'query',
         'args': {'limit': '10'},
         'limit': 490,
+        'verify': False,
         'start_sess': False
     }
 }
 
 
-class GreqTlsWrapper(tls_client.Session):
-    # wrapper around tls_client to work with grequests
-    def __init__(self):
-        super().__init__(client_identifier='firefox110', random_tls_extension_order=True)
-
-    def request(self, *args, **kwargs):
-        kwargs.pop('stream', None)  # remove "stream" argument
-        return self.execute_request(*args, **kwargs, allow_redirects=True)
-
-
 class SearchEngine:
     def __init__(self, engine_name):
-        self.sess = Session()
         self.engine_name = engine_name
+        self.engine_data = _web_engines[engine_name]
+        self.sess = hrequests.Session(verify=self.engine_data['verify'])
         self.sess.headers.update({
-            **headers,
             "Sec-Fetch-Site": "same-origin",
-            'Referer': _web_engines[self.engine_name]['domain'],
+            'Referer': self.engine_data['domain'],
         })
         logger.info('Starting instance...')
-        self.t = Thread(target=self._init_search)
-        self.t.daemon = True
-        self.t.start()
-
-    def _init_search(self):
-        if not _web_engines[self.engine_name]['start_sess']:
+        self.t = None
+        self.start_session()
+    
+    def start_session(self):
+        if not self.engine_data['start_sess']:
             return
-        r = self.sess.get(_web_engines[self.engine_name]['domain'])
-        if self.engine_name == 'startpage':
-            self._startpage_data = self.get_startpage_items(r)
-    
-    def startpage_get_page(self, query, sites):
-        resps = grequests.map([
-            grequests.post('https://www.startpage.com/sp/search',
-                data={
-                    **self._startpage_data,
-                    'query': f"{query[:_web_engines[self.engine_name]['limit']-len(site)]} site:{site}.com"
-                },
-                session=self.sess
-            )
-            for site in sites
-        ])
-        self.t = Thread(target=self.get_startpage_items, args=(resps[-1],))
-        self.t.daemon = True
-        self.t.start()
-        return dict(zip(sites, resps))
-        
-    def find_items(self, soup, args):
-        return {i: soup.find('input', {'type': 'hidden', 'name': i})['value'] for i in args}
-    
-    def get_startpage_items(self, r):
-        soup = BeautifulSoup(r.text, 'lxml')
-        return {'query': None, 'cat': 'web', **self.find_items(soup, ['lui', 'language', 'sc', 'abp'])}
-    
+        self.t = self.sess.get(self.engine_data['domain'], no_pause_threadsafe=True)
+
     def get_page(self, query, sites):
-        self.t.join()
+        if self.t is not None:
+            self.t.join()
         # escape query sequence
         query = re.escape(query)
-        if self.engine_name == 'startpage':
-            return self.startpage_get_page(query, sites)
-        elif self.engine_name == 'google':
-            self.sess.headers['Referer'] = _web_engines[self.engine_name]['domain'] = f'https://www.google.{choice(google_domains)}/'
-        return dict(zip(
+        if self.engine_name == 'google':
+            self.sess.headers['Referer'] = self.engine_data['domain'] = f'https://www.google.{choice(google_domains)}/'
+        
+        return dict(zip( 
             sites,
-            grequests.map([
-                grequests.get(
-                    (web_engine := _web_engines[self.engine_name])['domain'] + 'search?'
-                    + urlencode({
-                        web_engine['query']: f"{query[:_web_engines[self.engine_name]['limit']-len(site)]} site:{site}.com",
+            hrequests.map([
+                self.sess.async_get(
+                    (web_engine := self.engine_data)['domain'] + 'search',
+                    params = {
+                        web_engine['query']: f"{query[:self.engine_data['limit']-len(site)]} site:{site}.com",
                         **web_engine['args']
-                    }),
-                    session=self.sess
+                    },
                 )
                 for site in sites
             ], size=len(sites))
@@ -213,11 +145,12 @@ class QuizizzScraper:
         self.links = links
         self.quizizzs = []
         self.query = query
+        self.session = hrequests.Session()
     
     def async_requests(self):
         links = ['https://quizizz.com/quiz/' + u.split('/')[-2] for u in self.links]
-        reqs = [grequests.get(u, headers=_make_headers()) for u in links]
-        return grequests.imap_enumerated(reqs, size=len(reqs))
+        reqs = [self.session.async_get(u) for u in links]
+        return hrequests.imap_enum(reqs, size=len(reqs))
 
     def parse_links(self):
         resps = self.async_requests()
@@ -237,7 +170,7 @@ class QuizizzScraper:
         return answer
 
     def quizizz_parser(self, link, resp):
-        data = orjson.loads(resp.content)['data']['quiz']['info']
+        data = resp.json()['data']['quiz']['info']
         questions = []
         for x in data["questions"]:
             if "query" not in x["structure"]:
@@ -269,18 +202,16 @@ class QuizletScraper:
         self.links = links
         self.quizlets = []
         self.query = query
-        self.session = GreqTlsWrapper()
+        self.session = hrequests.Session()
         self._regex_obj = re.compile(r'(\\?)"termIdToTermsMap\\?":({.*?}),\\?"termSort\\?"')
 
     def async_requests(self):
         reqs = [
-            grequests.get(
+            self.session.async_get(
                 u,
-                headers=_make_headers(),
-                session=self.session
             ) for u in self.links
         ]
-        return grequests.imap_enumerated(reqs, size=len(reqs))
+        return hrequests.imap_enum(reqs, size=len(reqs))
 
     def parse_links(self):
         resps = self.async_requests()
@@ -484,7 +415,7 @@ if __name__ == '__main__' and len(sys.argv) > 1:
         exit()
     
     if args.chatgpt:
-        from flashcardgpt import FlashcardGPT
+        from gpt.flashcardgpt import FlashcardGPT
         chatgpt = FlashcardGPT()
         s_thread = chatgpt.async_start()
 

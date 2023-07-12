@@ -386,8 +386,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>395</width>
-             <height>668</height>
+             <width>673</width>
+             <height>568</height>
             </rect>
            </property>
            <layout class="QGridLayout" name="gridLayout_8">
@@ -793,6 +793,11 @@
                    <item>
                     <property name="text">
                      <string>Google</string>
+                    </property>
+                   </item>
+                   <item>
+                    <property name="text">
+                     <string>Bing</string>
                     </property>
                    </item>
                    <item>

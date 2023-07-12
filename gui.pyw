@@ -1,13 +1,18 @@
 from tendo.singleton import SingleInstance
+
 me = SingleInstance()
 
 import ctypes
+import json
 import os
 import sys
 import time
+import tkinter as tk
 from ctypes.wintypes import MSG
-from threading import Thread, Event
-import json
+from threading import Event, Thread
+from tkinter import messagebox
+
+import darkdetect
 import keyboard
 import mouse
 import win32api
@@ -17,14 +22,11 @@ from PyQt5 import QtCore, QtGui, QtWidgets, uic
 from PyQt5.QtCore import QObject, Qt, pyqtSignal
 from PyQt5.QtWidgets import QApplication, QMainWindow
 from win32api import GetMonitorInfo, MonitorFromPoint
-import darkdetect
 
-from tkinter import messagebox
-import tkinter as tk
 root = tk.Tk()
 root.withdraw()
 
-from scraper import Searchify, SearchEngine
+from scraper import SearchEngine, Searchify
 from textshot import *
 from windoweffect import WindowEffect
 
