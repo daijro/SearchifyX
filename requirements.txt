@@ -12,6 +12,7 @@ PyQt5==5.15.7
 pytesseract
 pywin32
 PyYAML
+regex
 tendo
 hrequests
 mailtm

@@ -11,6 +11,7 @@ from threading import Thread
 
 import hrequests
 import orjson
+import regex
 from bs4 import BeautifulSoup, MarkupResemblesLocatorWarning
 from jellyfish import jaro_distance as similar
 
@@ -203,7 +204,7 @@ class QuizletScraper:
         self.quizlets = []
         self.query = query
         self.session = hrequests.Session()
-        self._regex_obj = re.compile(r'(\\?)"termIdToTermsMap\\?":({.*?}),\\?"termSort\\?"')
+        self._regex_obj = regex.compile(r"\[(?:[^\[\]]|(?R))*\]")
 
     def async_requests(self):
         reqs = [
@@ -223,23 +224,20 @@ class QuizletScraper:
         return self.quizlets
 
     def quizlet_parser(self, link, resp):
-        terms_match = re.search(self._regex_obj, resp.text)
-        if terms_match[1]:  # needs to be unescaped
-            data = orjson.loads(terms_match[2].encode('utf-8').decode('unicode_escape'))
-        else:
-            data = orjson.loads(terms_match[2])
+        text = self._regex_obj.search(resp.text, pos=resp.text.index('hasPart'))[0]
+        data = orjson.loads(text.encode('utf-8').decode('unicode_escape'))
         return [
             {
-                'question': i['word'].strip(),
-                'answer': i['definition'].strip(),
+                'question': i['text'].strip(),
+                'answer': i['acceptedAnswer']['text'].strip(),
                 'similarity': max(
-                    (similar(i[x], self.query), x == 'word')
+                    (similar(x, self.query), n == 0)
                     # (similarity: float, is_term: bool)
-                    for x in ['word', 'definition']
+                    for n, x in enumerate((i['text'], i['acceptedAnswer']['text']))
                 ),
                 'url': link,
             }
-            for i in data.values()
+            for i in data
         ]
 
 
