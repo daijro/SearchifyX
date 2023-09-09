@@ -14,5 +14,5 @@ pywin32
 PyYAML
 regex
 tendo
-hrequests[all]
+hrequests[all]>=6.0.1
 mailtm

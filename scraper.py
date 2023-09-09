@@ -6,7 +6,9 @@ import sys
 import time
 from contextlib import suppress
 from itertools import chain
-from random import choice
+from random import choice, randint
+from socket import inet_ntoa
+from struct import pack
 from threading import Thread
 
 import hrequests
@@ -31,6 +33,7 @@ def resource_path(relative_path):
         base_path = os.path.dirname(__file__)
     return os.path.join(base_path, relative_path)
 
+
 google_domains = tuple(orjson.loads(open(resource_path('domains.json'), 'r').read()))
 
 
@@ -44,6 +47,10 @@ class _Utils:
     def remove_duplicates(a):
         return list(set(a))
 
+    @staticmethod
+    def newIp():
+        return {'X-Forwarded-For': inet_ntoa(pack(">I", randint(0x1000000, 0xDFA57FFF)))}
+
 
 _web_engines = {
     'google': {
@@ -52,7 +59,7 @@ _web_engines = {
         'args': {'aqs': 'chrome..69i57.888j0j1', 'sourceid': 'chrome', 'ie': 'UTF-8'},
         'limit': 2038,
         'verify': False,
-        'start_sess': False
+        'start_sess': False,
     },
     'bing': {
         'domain': 'https://www.bing.com/',
@@ -60,7 +67,7 @@ _web_engines = {
         'args': {'lq': '0', 'ghsh': '0', 'ghacc': '0', 'ghpl': ''},
         'limit': 990,
         'verify': True,
-        'start_sess': True
+        'start_sess': True,
     },
     'duckduckgo': {
         'domain': 'https://ddg-api.herokuapp.com/',
@@ -68,8 +75,8 @@ _web_engines = {
         'args': {'limit': '10'},
         'limit': 490,
         'verify': False,
-        'start_sess': False
-    }
+        'start_sess': False,
+    },
 }
 
 
@@ -78,18 +85,20 @@ class SearchEngine:
         self.engine_name = engine_name
         self.engine_data = _web_engines[engine_name]
         self.sess = hrequests.Session(verify=self.engine_data['verify'])
-        self.sess.headers.update({
-            "Sec-Fetch-Site": "same-origin",
-            'Referer': self.engine_data['domain'],
-        })
+        self.sess.headers.update(
+            {
+                "Sec-Fetch-Site": "same-origin",
+                'Referer': self.engine_data['domain'],
+            }
+        )
         logger.info('Starting instance...')
         self.t = None
         self.start_session()
-    
+
     def start_session(self):
         if not self.engine_data['start_sess']:
             return
-        self.t = self.sess.get(self.engine_data['domain'], no_pause_threadsafe=True)
+        self.t = self.sess.get(self.engine_data['domain'], nohup=True)
 
     def get_page(self, query, sites):
         if self.t is not None:
@@ -97,27 +106,31 @@ class SearchEngine:
         # escape query sequence
         query = re.escape(query)
         if self.engine_name == 'google':
-            self.sess.headers['Referer'] = self.engine_data['domain'] = f'https://www.google.{choice(google_domains)}/'
-        
-        return dict(zip( 
-            sites,
-            hrequests.map([
-                self.sess.async_get(
-                    (web_engine := self.engine_data)['domain'] + 'search',
-                    params = {
-                        web_engine['query']: f"{query[:self.engine_data['limit']-len(site)]} site:{site}.com",
-                        **web_engine['args']
-                    },
-                )
-                for site in sites
-            ], size=len(sites))
-        ))
+            self.sess.headers['Referer'] = self.engine_data[
+                'domain'
+            ] = f'https://www.google.{choice(google_domains)}/'
+
+        reqs = [
+            self.sess.async_get(
+                (web_engine := self.engine_data)['domain'] + 'search',
+                params={
+                    web_engine[
+                        'query'
+                    ]: f"{query[:self.engine_data['limit']-len(site)]} site:{site}.com",
+                    **web_engine['args'],
+                },
+            )
+            for site in sites
+        ]
+
+        return dict(zip(sites, hrequests.map(reqs, size=len(sites))))
 
 
 class SearchWeb:
-    """
+    '''
     search web for query
-    """
+    '''
+
     def __init__(self, query, sites, engine):
         self.query = query
         self.links = None
@@ -129,9 +142,9 @@ class SearchWeb:
         }
 
     def search(self):
-        """
+        '''
         search web for query
-        """
+        '''
         resps = self.engine.get_page(self.query, self.sites)
         if None in resps.values():
             raise Exception('Error searching web')
@@ -139,7 +152,7 @@ class SearchWeb:
             site: _Utils.remove_duplicates(re.findall(self._regex_objs[site], resps[site].text))
             for site in self.sites
         }
-        
+
 
 class QuizizzScraper:
     def __init__(self, links, query):
@@ -147,10 +160,10 @@ class QuizizzScraper:
         self.quizizzs = []
         self.query = query
         self.session = hrequests.Session()
-    
+
     def async_requests(self):
         links = ['https://quizizz.com/quiz/' + u.split('/')[-2] for u in self.links]
-        reqs = [self.session.async_get(u) for u in links]
+        reqs = [self.session.async_get(u, headers=_Utils.newIp()) for u in links]
         return hrequests.imap_enum(reqs, size=len(reqs))
 
     def parse_links(self):
@@ -189,12 +202,14 @@ class QuizizzScraper:
                 answer = ', '.join(answers)
             else:
                 answer = "None"
-            questions.append({
-                'question': questr,
-                'answer': answer,
-                'similarity': (similar(questr, self.query), True),
-                'url': link,
-            })
+            questions.append(
+                {
+                    'question': questr,
+                    'answer': answer,
+                    'similarity': (similar(questr, self.query), True),
+                    'url': link,
+                }
+            )
         return questions
 
 
@@ -207,11 +222,7 @@ class QuizletScraper:
         self._regex_obj = regex.compile(r"\[(?:[^\[\]]|(?R))*\]")
 
     def async_requests(self):
-        reqs = [
-            self.session.async_get(
-                u,
-            ) for u in self.links
-        ]
+        reqs = [self.session.async_get(u, headers=_Utils.newIp()) for u in self.links]
         return hrequests.imap_enum(reqs, size=len(reqs))
 
     def parse_links(self):
@@ -244,13 +255,13 @@ class QuizletScraper:
 class TimeLogger:
     def __init__(self):
         self.elapsed_total = time.time()
-        self.ongoing           = {}
-        self.finished          = {}
-        self.finished_threads  = {}
+        self.ongoing = {}
+        self.finished = {}
+        self.finished_threads = {}
 
     def start(self, item):
         self.ongoing[item] = time.time()
-    
+
     def end(self, item=-1, _thread_flag=False):
         if type(item) == int:
             item = list(self.ongoing)[item]
@@ -265,15 +276,22 @@ class TimeLogger:
         for k, v in self.finished.items():
             print(f'> {k.title().ljust(longest_len, " ")} \t= {round(v, 5)}')
         if self.finished_threads:
+            # fancy terminal printing
             print(
-                '> Threads'.ljust(longest_len, " ") +
-                ' \t= ' +
-                (',\n'+longest_len*' ' + '  \t  ').join([
-                    ': '.join([name.title(), str(round(time, 5))])
-                    for name, time in self.finished_threads.items()
-                ])
+                '> Threads'.ljust(longest_len, " ")
+                + ' \t= '
+                + (',\n' + longest_len * ' ' + '  \t  ').join(
+                    [
+                        ': '.join([name.title(), str(round(time, 5))])
+                        for name, time in self.finished_threads.items()
+                    ]
+                )
             )
-        print('TOTAL ELAPSED'.ljust(longest_len, " ") + ' \t= ' + str(round(time.time() - self.elapsed_total, 5)))
+        print(
+            'TOTAL ELAPSED'.ljust(longest_len, " ")
+            + ' \t= '
+            + str(round(time.time() - self.elapsed_total, 5))
+        )
 
 
 class Searchify:
@@ -294,28 +312,29 @@ class Searchify:
         self.cur = self.con.cursor()
         self.cur.execute(
             "CREATE TABLE IF NOT EXISTS flashcards (question TEXT, answer TEXT, url TEXT, "
-            "UNIQUE(question, answer, url) ON CONFLICT IGNORE)")
+            "UNIQUE(question, answer, url) ON CONFLICT IGNORE)"
+        )
         self.con.commit()
         # add function for character distance
         self.con.create_function("similar", 2, similar)
         self.con.commit()
 
-
     def main(self):
         self.get_links()
         threads = []
         for site in self.sites:
-            threads.append(Thread(
+            thread = Thread(
                 target=self._flashcard_thread,
                 args=(
                     self.site_scrapers[site],
                     self.links[site],
                     site,
-                )
-            ))
-            threads[-1].daemon = True
+                ),
+            )
+            threads.append(thread)
+            thread.daemon = True
             self.timer.start(site)
-            threads[-1].start()
+            thread.start()
 
         for n, T in enumerate(threads):
             T.join()
@@ -324,14 +343,12 @@ class Searchify:
         self.sort_flashcards()
         self.stop_time = time.time() - self.timer.elapsed_total
         Thread(target=self.save_flashcards).start()  # save flashcards in background
-        
 
     def _flashcard_thread(self, site_scraper, links, site_name):
         if items := site_scraper(links, self.query).parse_links():
             self.flashcards += [max(f, key=lambda x: x['similarity'][0]) for f in items if f]
             self.unsaved_cards += items
         self.timer.end(site_name, _thread_flag=True)
-
 
     def get_links(self):
         self.timer.start('web search')
@@ -340,8 +357,7 @@ class Searchify:
         self.timer.end()
         self.links = search_bing.links
         self.match_db()
-    
-    
+
     def match_db(self):
         # check if links are already in database
         for site in self.links:
@@ -351,21 +367,28 @@ class Searchify:
                     continue  # skip if not in database
                 self.links[site].remove(url)
                 # get the top similar flashcard from the database
-                self.cur.execute("SELECT * FROM flashcards WHERE url=? ORDER BY similar(question, ?) DESC LIMIT 1", (url, self.query))
+                self.cur.execute(
+                    "SELECT * FROM flashcards WHERE url=? ORDER BY similar(question, ?) DESC LIMIT 1",
+                    (url, self.query),
+                )
                 i = self.cur.fetchone()
                 similar_score = (similar(i[0], self.query), True)
-                self.flashcards.append(dict(zip(('question', 'answer', 'url', 'similarity'), (*i, similar_score))))
-
+                self.flashcards.append(
+                    dict(zip(('question', 'answer', 'url', 'similarity'), (*i, similar_score)))
+                )
 
     def main_offline(self, amount=20):
         # drop in replacement for main() when offline. timers not supported
-        self.cur.execute(f"SELECT * FROM flashcards ORDER BY similar(question, ?) DESC LIMIT {amount}", (self.query,))
+        self.cur.execute(
+            f"SELECT * FROM flashcards ORDER BY similar(question, ?) DESC LIMIT {amount}",
+            (self.query,),
+        )
         self.flashcards = [
             {
                 'question': i[0],
                 'answer': i[1],
                 'url': i[2],
-                'similarity': f"{round(similar(i[0], self.query) * 100, 2)}%"
+                'similarity': f"{round(similar(i[0], self.query) * 100, 2)}%",
             }
             for i in self.cur.fetchall()
         ]
@@ -373,33 +396,58 @@ class Searchify:
     def save_flashcards(self):
         self.cur.executemany(
             "INSERT INTO flashcards VALUES (?, ?, ?)",
-            [(i['question'], i['answer'], i['url']) for i in chain.from_iterable(self.unsaved_cards)]
+            [
+                (i['question'], i['answer'], i['url'])
+                for i in chain.from_iterable(self.unsaved_cards)
+            ],
         )
         self.con.commit()
         del self.unsaved_cards
-
 
     def sort_flashcards(self):  # sourcery skip: for-index-replacement
         self.flashcards.sort(key=lambda x: x['similarity'], reverse=True)
 
         for card in range(len(self.flashcards)):
-            if not self.flashcards[card]['similarity'][1]: # if cards and terms are swapped
-                self.flashcards[card]['question'],  self.flashcards[card]['answer']   = (
-                self.flashcards[card]['answer'],    self.flashcards[card]['question']   )
+            if not self.flashcards[card]['similarity'][1]:  # if cards and terms are swapped
+                self.flashcards[card]['question'], self.flashcards[card]['answer'] = (
+                    self.flashcards[card]['answer'],
+                    self.flashcards[card]['question'],
+                )
 
-            self.flashcards[card]['similarity'] = str(round(self.flashcards[card]['similarity'][0] * 100, 2)) + '%'
+            self.flashcards[card]['similarity'] = (
+                str(round(self.flashcards[card]['similarity'][0] * 100, 2)) + '%'
+            )
 
 
 if __name__ == '__main__' and len(sys.argv) > 1:
     # argument parsing
     import argparse
+
     parser = argparse.ArgumentParser(description='Search the web for flashcards')
-    parser.add_argument('--query',  '-q', help='query to search for',  default=None)
-    parser.add_argument('--output', '-o', help='output file',          default=None)
-    parser.add_argument('--sites',  '-s', help='question sources quizlet,quizizz (comma seperated list)', default='quizlet,quizizz')
-    parser.add_argument('--engine', '-e', help='search engine to use', default='google', choices=_web_engines.keys())
-    parser.add_argument('--chatgpt', '-gpt', help='summarize the results in ChatGPT (expiremental)', action='store_true')
-    parser.add_argument('--search-db', '-db', help='search database n amount for flashcards. works offline', type=int, default=None)
+    parser.add_argument('--query', '-q', help='query to search for', default=None)
+    parser.add_argument('--output', '-o', help='output file', default=None)
+    parser.add_argument(
+        '--sites',
+        '-s',
+        help='question sources quizlet,quizizz (comma seperated list)',
+        default='quizlet,quizizz',
+    )
+    parser.add_argument(
+        '--engine', '-e', help='search engine to use', default='google', choices=_web_engines.keys()
+    )
+    parser.add_argument(
+        '--chatgpt',
+        '-gpt',
+        help='summarize the results in ChatGPT (expiremental)',
+        action='store_true',
+    )
+    parser.add_argument(
+        '--search-db',
+        '-db',
+        help='search database n amount for flashcards. works offline',
+        type=int,
+        default=None,
+    )
     args = parser.parse_args()
 
     if args.output:
@@ -411,16 +459,17 @@ if __name__ == '__main__' and len(sys.argv) > 1:
     if not args.query:
         print('No input specified')
         exit()
-    
+
     if args.chatgpt:
         from gpt.flashcardgpt import FlashcardGPT
+
         chatgpt = FlashcardGPT()
         s_thread = chatgpt.async_start()
 
     # main program
-    flashcards = [] # create flashcard list
+    flashcards = []  # create flashcard list
 
-    sites = args.sites.lower().split(',') # get list of sites
+    sites = args.sites.lower().split(',')  # get list of sites
     engine_name = args.engine.lower().strip()  # get search engine
 
     # start search engine
@@ -441,7 +490,7 @@ if __name__ == '__main__' and len(sys.argv) > 1:
     print(f'{len(s.flashcards)} flashcards found')
 
     not args.search_db and s.timer.print_timers()
-    
+
     # get best answer with chatgpt
     if args.chatgpt and s.flashcards:
         print('\n' + '-' * 20 + '\nCHATGPT SUMMARIZATION:')
@@ -449,4 +498,3 @@ if __name__ == '__main__' and len(sys.argv) > 1:
         for chunk in chatgpt.run(args.query, s.flashcards[:10]):
             print(chunk, end='')
         print('')
-        
