@@ -1,17 +1,16 @@
 # SearchifyX
 
 
-**SearchifyX**, predecessor to *[Searchify](https://www.reddit.com/user/daijro/comments/jg7wee/searchify_quizletbrainly_searcher/)*, is a ***fast*** Quizlet, Quizizz, and Brainly webscraper with various stealth features.
+**SearchifyX**, predecessor to *[Searchify](https://www.reddit.com/user/daijro/comments/jg7wee/searchify_quizletbrainly_searcher/)*, is a ***fast*** Quizlet, Quizizz, and Brainly webscraper with various accessibility features.
 
-SearchifyX lets you easily query a question through different answer websites *(similar to Socratic on mobile)*, and sort them based on how similar they are to your query. It also includes a screen OCR scanner, hotkeys, and other features for stealthy use.
+SearchifyX lets you easily query a question through different answer websites *(similar to Socratic on mobile)*, and sort them based on how similar they are to your query. It also includes a screen OCR scanner, hotkeys, and other features.
 
 
 <hr width=30>
 
 #### SearchifyX in action
 
-![in action](https://user-images.githubusercontent.com/72637910/147515480-236fe392-6282-44bc-b888-54f15adeb523.gif)
-
+![in actionZ](https://github.com/daijro/SearchifyX/assets/72637910/aada1d32-46ea-4f75-bc56-cf535c862666)
 
 ---
 
@@ -91,7 +90,7 @@ Optional arguments:
 
 - Option to not show in taskbar
 
-- Hides from screen capture
+- Hide from screen capture
 
 <hr width=30>
 
