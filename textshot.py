@@ -61,6 +61,7 @@ class Snipper(QtWidgets.QWidget):
 
         dc = int(self.winId())
         user32.SetWindowLongW(dc, win32con.GWL_EXSTYLE, user32.GetWindowLongW(dc, win32con.GWL_EXSTYLE) | win32con.WS_EX_NOACTIVATE | win32con.WS_EX_APPWINDOW)
+        ctypes.windll.user32.SetWindowDisplayAffinity(dc, 0x11)
         
         screen = QtWidgets.QApplication.screenAt(QtGui.QCursor.pos()) # get screen
         self.screen = screen.grabWindow(0) # screenshot

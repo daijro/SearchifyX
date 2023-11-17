@@ -38,3 +38,9 @@ Icon
 Network Trash Folder
 Temporary Items
 .apdisk
+
+# Flashcard database
+flashcards.db
+
+# FlashcardGPT session file
+poe_token.json
