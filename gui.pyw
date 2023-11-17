@@ -1,5 +1,4 @@
 from tendo.singleton import SingleInstance
-
 me = SingleInstance()
 
 import ctypes
@@ -22,6 +21,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets, uic
 from PyQt5.QtCore import QObject, Qt, pyqtSignal
 from PyQt5.QtWidgets import QApplication, QMainWindow
 from win32api import GetMonitorInfo, MonitorFromPoint
+import darkdetect
 
 root = tk.Tk()
 root.withdraw()
