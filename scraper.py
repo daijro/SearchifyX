@@ -15,7 +15,7 @@ import hrequests
 import orjson
 import regex
 from bs4 import BeautifulSoup, MarkupResemblesLocatorWarning
-from jellyfish import jaro_distance as similar
+from jellyfish import jaro_similarity as similar
 
 # set logger
 logger = logging.getLogger(__name__)
